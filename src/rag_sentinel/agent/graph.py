@@ -249,6 +249,7 @@ class SentinelAgent:
             claims=state.get("claims", []), conflicts=state.get("conflicts", []), gating=self.p.gating,
             use_relevance_gate=self.p.rerank, min_relevance=self.settings.min_relevance,
             use_temporal=self.p.temporal_ranking, use_conflicts=self.p.conflict_detection,
+            as_of=state["analysis"]["as_of"] if self.p.metadata_in_prompt else "",
         )  # fmt: skip
         return {"verification": v.to_dict(),
                 "trace": [_tr("verify_evidence", t, f"{v.status} rules={v.rules_fired or ['none']}")]}  # fmt: skip

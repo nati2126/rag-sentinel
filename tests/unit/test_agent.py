@@ -5,7 +5,15 @@ import pytest
 
 from rag_sentinel.agent.graph import SentinelAgent
 from rag_sentinel.agent.query_analysis import analyze_query
-from rag_sentinel.agent.verification import ANSWERED, INSUFFICIENT, NEEDS_REVIEW, VERIFIED, verify
+from rag_sentinel.agent.verification import (
+    ANSWERED,
+    INSUFFICIENT,
+    NEEDS_REVIEW,
+    VERIFIED,
+    states_conflict_value,
+    unsupported_numbers,
+    verify,
+)
 
 REF = date(2026, 10, 1)
 
@@ -156,3 +164,25 @@ def test_graph_baseline_runs_and_reports_answered(agent_kb):
     res = SentinelAgent(agent_kb, "B0").ask("How many days of annual leave do employees get?")
     assert res["status"] in (ANSWERED, INSUFFICIENT) and res["conflicts"] == []
     assert [t["detail"] for t in res["trace"] if t["node"] == "extract_claims"] == ["skipped (pipeline)"]
+
+
+def test_numeric_grounding_accepts_question_years_and_document_metadata():
+    passage = ["Passwords must be at least 8 characters."]
+    answer = "In 2025, the minimum password length was 8 characters, as per Password Standard v1.0 [E1]."
+    assert unsupported_numbers(answer, passage) == ["1", "2025"]
+    assert (
+        unsupported_numbers(answer, passage, "What was the minimum password length in 2025?", ["Password Standard 1.0"])
+        == []
+    )
+
+
+def test_numeric_grounding_does_not_accept_premise_numbers_from_the_question():
+    passage = ["Full-time employees receive 25 days of annual leave."]
+    assert unsupported_numbers("Yes, 30 days [E1].", passage, "Do employees get 30 days of leave?") == ["30"]
+
+
+def test_conflict_only_blocks_answers_that_state_one_of_its_values():
+    conflict = {"claim_a": {"value_num": 500.0}, "claim_b": {"value_num": 1000.0}}
+    assert states_conflict_value(conflict, {"1000"}) is True
+    assert states_conflict_value(conflict, {"10000"}) is False
+    assert states_conflict_value({"claim_a": {"value_num": None}, "claim_b": {}}, {"5"}) is None

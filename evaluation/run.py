@@ -202,14 +202,15 @@ def main() -> None:
     names = [p for p in args.pipelines.split(",") if p] + ([a.name for a in ABLATIONS] if args.ablations else [])
     rec_path = RESULTS / f"{args.split}_records.jsonl"
     existing: dict[str, list[dict]] = defaultdict(list)
-    if rec_path.exists() and not args.force:
+    if rec_path.exists():
         for line in rec_path.read_text(encoding="utf-8").splitlines():
             r = json.loads(line)
             existing[r["pipeline"]].append(r)
-    all_records = {k: v for k, v in existing.items() if k not in names or len(v) >= len(questions)}
+    # --force re-runs the requested pipelines; records of other pipelines are kept
+    all_records = {k: v for k, v in existing.items() if k not in names or (not args.force and len(v) >= len(questions))}
 
     for name in names:
-        if name in all_records and len(all_records[name]) >= len(questions):
+        if name in all_records:
             print(f"[{name}] cached ({len(all_records[name])} records)")
             continue
         agent = SentinelAgent(kb, PIPELINES[name])

@@ -53,7 +53,7 @@ def citations_in(answer: str, listed: list[str]) -> list[str]:
     return out
 
 
-_YEAR = re.compile(r"(19|20)\d\d")
+_YEAR = re.compile(r"\b(19|20)\d\d\b")
 
 
 def unsupported_numbers(
@@ -86,6 +86,15 @@ def relevant_keys(question: str, answer: str, cited_chunks: set[str], claims: li
     return keys
 
 
+def states_conflict_value(conflict: dict, answer_nums: set[str]) -> bool | None:
+    """Whether the answer states a numeric value of either conflicting claim (None: claims are not numeric)."""
+    nums = [(conflict.get(side) or {}).get("value_num") for side in ("claim_a", "claim_b")]
+    nums = [n for n in nums if n is not None]
+    if not nums:
+        return None
+    return any(f"{n:g}" in answer_nums for n in nums)
+
+
 def verify(
     *,
     question: str,
@@ -98,6 +107,7 @@ def verify(
     min_relevance: float,
     use_temporal: bool,
     use_conflicts: bool,
+    as_of: str = "",
 ) -> Verification:
     if not gating:
         if not evidence or generation is None or generation.get("cannot_answer"):
@@ -131,7 +141,8 @@ def verify(
         return _fail(v, INSUFFICIENT, "R4", "The answer has no valid citation to the provided evidence.")
 
     cited = [by_label[c] for c in v.valid_citations]
-    meta = [" ".join(str(e.get(k) or "") for k in ("title", "version", "effective_date")) for e in cited]
+    # the as-of date is given to the generator, so "as of 2026-10-01" is not an unsupported value
+    meta = [" ".join(str(e.get(k) or "") for k in ("title", "version", "effective_date")) for e in cited] + [as_of]
     v.unsupported_values = unsupported_numbers(generation["answer"], [e["text"] for e in cited], question, meta)
     if v.unsupported_values:
         _flag(v, "R5", f"Answer states values not found in the cited evidence: {', '.join(v.unsupported_values)}.")
@@ -147,9 +158,12 @@ def verify(
         cited_chunks = {e["chunk_id"] for e in cited}
         cited_docs = {e["doc_id"] for e in cited}
         keys = relevant_keys(question, generation["answer"], cited_chunks, claims)
+        answer_nums = numbers_in(_LABEL.sub(" ", generation["answer"]))
         for c in conflicts:
             if c["predicate_key"] not in keys or c["status"] == "dismissed":
                 continue
+            if states_conflict_value(c, answer_nums) is False:
+                continue  # e.g. the answer gives the CFO threshold; the conflict is about the director threshold
             pair = {c["doc_a_id"], c["doc_b_id"]}
             if c["kind"] == "contradiction" and not c.get("preferred_doc_id") and c["status"] == "open":
                 v.blocking_conflicts.append(c["id"])
