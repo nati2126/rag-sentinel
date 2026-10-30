@@ -1,0 +1,70 @@
+[project]
+name = "rag-sentinel"
+version = "0.1.0"
+description = "Version-aware evidence verification for RAG. Trust the evidence, not just the answer."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+dependencies = [
+    # API + config
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "sqlmodel>=0.0.22",
+    "httpx>=0.27",
+    # document processing
+    "pymupdf>=1.24",
+    "python-docx>=1.1",
+    "markdown-it-py>=3.0",
+    "pyyaml>=6.0",
+    "python-dateutil>=2.9",
+    # retrieval
+    "numpy>=1.26",
+    "qdrant-client>=1.11",
+    "torch>=2.4",
+    "sentence-transformers>=3.0",
+    # agent
+    "langgraph>=0.2",
+    # UI
+    "streamlit>=1.38",
+    "pandas>=2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rag_sentinel"]
+
+# CPU-only PyTorch: the GPU is reserved for the Ollama LLM, and the CUDA wheel is ~2.5 GB larger.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: needs a running Ollama server and local models (deselect with -m 'not integration')",
+]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]
