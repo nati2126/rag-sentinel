@@ -142,6 +142,7 @@ def test_graph_b4_verified_with_trace(agent_kb):
         "detect_conflicts",
         "rank_evidence",
         "generate_answer",
+        "check_answer",
         "verify_evidence",
         "final_decision",
     ]
@@ -186,3 +187,36 @@ def test_conflict_only_blocks_answers_that_state_one_of_its_values():
     assert states_conflict_value(conflict, {"1000"}) is True
     assert states_conflict_value(conflict, {"10000"}) is False
     assert states_conflict_value({"claim_a": {"value_num": None}, "claim_b": {}}, {"5"}) is None
+
+
+def test_answer_check_rejects_a_draft_that_answers_a_different_question(agent_kb, scripted_llm):
+    scripted_llm.handlers["AnswerCheck"] = lambda s, u: {
+        "answers_question": False,
+        "supported": True,
+        "missing": "the name of the officer",
+    }
+    res = SentinelAgent(agent_kb, "B4").ask("How many days of annual leave do full-time employees get?")
+    assert res["status"] == INSUFFICIENT and "R9" in res["rules_fired"]
+    assert "the name of the officer" in " ".join(res["reasons"])
+
+
+def test_answer_check_flags_unsupported_statements_for_review(agent_kb, scripted_llm):
+    scripted_llm.handlers["AnswerCheck"] = lambda s, u: {"answers_question": True, "supported": False, "missing": ""}
+    res = SentinelAgent(agent_kb, "B4").ask("How many days of annual leave do full-time employees get?")
+    assert res["status"] == NEEDS_REVIEW and "R10" in res["rules_fired"]
+
+
+def test_answer_check_failure_is_not_trusted(agent_kb, scripted_llm):
+    from rag_sentinel.llm import LLMOutputError
+
+    def broken(s, u):
+        raise LLMOutputError("AnswerCheck: model output failed validation twice")
+
+    scripted_llm.handlers["AnswerCheck"] = broken
+    res = SentinelAgent(agent_kb, "B4").ask("How many days of annual leave do full-time employees get?")
+    assert res["status"] == NEEDS_REVIEW and "R10" in res["rules_fired"]
+
+
+def test_answer_check_is_not_part_of_b3(agent_kb, scripted_llm):
+    SentinelAgent(agent_kb, "B3").ask("How many days of annual leave do full-time employees get?")
+    assert not any(name == "AnswerCheck" for name, _ in scripted_llm.calls)

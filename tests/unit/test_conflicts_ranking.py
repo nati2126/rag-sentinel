@@ -146,13 +146,102 @@ def test_historical_as_of_prefers_version_in_force_then():
     assert rank_evidence(hits, docs, lin, date(2026, 3, 1), RankingWeights())[0].doc_id == "v1"
 
 
-def test_judge_failure_is_recorded_for_review_not_dropped():
+def _broken_judge(a, b):
     from rag_sentinel.llm import LLMOutputError
 
-    def broken(a, b):
-        raise LLMOutputError("PairVerdict: model output failed validation twice")
+    raise LLMOutputError("PairVerdict: model output failed validation twice")
 
+
+def _disagreeing_judge(a, b):
+    return "different_context"
+
+
+def test_judge_failure_on_undecided_pair_is_recorded_for_review():
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "5 days", qualifier="after 5 years of service"), claim("b", "y", "3 days")]
+    (only,) = detector(docs, claims, judge=_broken_judge).detect()
+    assert only.kind == INSUFFICIENT and only.detected_by == "llm_error"
+
+
+def test_judge_failure_keeps_a_rule_finding():
     docs = [doc("x", auth=4), doc("y", auth=4)]
     claims = [claim("a", "x", "5 days"), claim("b", "y", "3 days")]
-    (only,) = detector(docs, claims, judge=broken).detect()
-    assert only.kind == INSUFFICIENT and only.detected_by == "llm_error"
+    (only,) = detector(docs, claims, judge=_broken_judge).detect()
+    assert only.kind == CONTRADICTION and only.detected_by == "rule"
+
+
+# -- arbitration regression tests: the LLM judge never erases a rule finding ----------------------------
+
+
+def test_overlapping_population_rule_finding_survives_judge_disagreement():
+    """'All employees: 20 days' (handbook) vs 'full-time employees: 25 days' (policy v2, supersedes v1)."""
+    v1 = doc("v1", family="leave", v=1, eff=date(2026, 1, 1), auth=5)
+    v2 = doc("v2", family="leave", v=2, eff=date(2026, 6, 1), auth=5, sup="v1")
+    hb = doc("hb", eff=date(2025, 11, 1), auth=3)
+    claims = [claim("c1", "v1", "20 days", subject="full-time employee"),
+              claim("c2", "v2", "25 days", subject="full-time employee"),
+              claim("c3", "hb", "20 days", subject="all employees")]  # fmt: skip
+    found = kinds(detector([v1, v2, hb], claims, judge=_disagreeing_judge).detect())
+    f = found[("hb", "v2")]
+    assert f.kind == OUTDATED and f.confirmed
+    assert f.judge_opinion == "different_context" and "kept for review" in f.explanation
+    assert found[("v1", "v2")].kind == HISTORICAL
+
+
+def test_judge_agreement_is_recorded():
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "5 days"), claim("b", "y", "3 days")]
+    (only,) = detector(docs, claims, judge=lambda a, b: "same_fact_conflict").detect()
+    assert only.kind == CONTRADICTION and only.detected_by == "rule+llm" and only.judge_opinion is None
+
+
+def test_rule_finding_without_judge_is_unchanged():
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "5 days"), claim("b", "y", "3 days")]
+    (with_judge,) = detector(docs, claims, judge=_disagreeing_judge).detect()
+    (without,) = detector(docs, claims).detect()
+    assert with_judge.kind == without.kind == CONTRADICTION
+
+
+def test_supersession_is_historical_and_never_sent_to_the_judge():
+    calls = []
+    v1 = doc("v1", family="p", v=1, eff=date(2025, 1, 1), auth=4)
+    v2 = doc("v2", family="p", v=2, eff=date(2026, 1, 1), auth=4, sup="v1")
+    claims = [claim("a", "v1", "$250"), claim("b", "v2", "$320")]
+    (only,) = detector([v1, v2], claims, judge=lambda a, b: calls.append(1) or "different_context").detect()
+    assert only.kind == HISTORICAL and calls == []
+
+
+def test_equivalent_values_across_units_are_not_conflicts():
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "2 weeks"), claim("b", "y", "14 days")]
+    assert detector(docs, claims, judge=_disagreeing_judge).detect() == []
+
+
+def test_different_units_with_different_amounts_are_a_rule_finding():
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "4 weeks"), claim("b", "y", "14 days")]
+    (only,) = detector(docs, claims).detect()
+    assert only.kind == CONTRADICTION
+
+
+def test_scope_difference_is_left_to_the_judge():
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "5 days", qualifier="international travel"), claim("b", "y", "3 days")]
+    (only,) = detector(docs, claims, judge=_disagreeing_judge).detect()
+    assert only.kind == DIFFERENT_CONTEXT and only.detected_by == "llm"
+
+
+def test_document_with_several_values_for_one_attribute_is_left_to_the_judge():
+    """'$500 needs a director, $10,000 the CFO' with the approver lost in extraction vs '$1,000 needs a director'."""
+    docs = [doc("fin", auth=4), doc("proc", auth=4)]
+    claims = [claim("a", "fin", "$500", subject="purchases", key="approval_amount"),
+              claim("b", "fin", "$10,000", subject="purchases", key="approval_amount"),
+              claim("c", "proc", "$1,000", subject="purchases", key="approval_amount")]  # fmt: skip
+    verdicts = {frozenset({"a", "c"}): "same_fact_conflict", frozenset({"b", "c"}): "different_context"}
+    found = detector(docs, claims, judge=lambda x, y: verdicts[frozenset({x.id, y.id})]).detect()
+    by = {frozenset({f.claim_a.id, f.claim_b.id}): f for f in found}
+    assert by[frozenset({"a", "c"})].kind == CONTRADICTION and by[frozenset({"a", "c"})].detected_by == "llm"
+    assert by[frozenset({"b", "c"})].kind == DIFFERENT_CONTEXT
+    (no_judge,) = {f.kind for f in detector(docs, claims).detect()}
+    assert no_judge == INSUFFICIENT

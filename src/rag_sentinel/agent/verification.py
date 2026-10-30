@@ -1,6 +1,6 @@
 """Explicit, testable evidence rules that decide VERIFIED / NEEDS_REVIEW / INSUFFICIENT_EVIDENCE.
 
-The LLM's own confidence is never used. Rules, in order:
+The generator's own confidence is never used. Rules, in order:
   R1 no evidence, or the best passage is below the relevance threshold      -> INSUFFICIENT_EVIDENCE
   R2 no retrieved evidence is in force at the as-of date                     -> INSUFFICIENT_EVIDENCE
   R3 the generator declined to answer                                       -> INSUFFICIENT_EVIDENCE
@@ -9,6 +9,8 @@ The LLM's own confidence is never used. Rules, in order:
   R6 every cited source is superseded / draft / not yet effective            -> NEEDS_REVIEW
   R7 an unresolved contradiction exists for a fact the answer relies on      -> NEEDS_REVIEW
   R8 the answer cites an outdated source but not the preferred one           -> NEEDS_REVIEW
+  R9 the answer check finds the draft does not answer the question           -> INSUFFICIENT_EVIDENCE
+  R10 the answer check finds statements the cited passages do not support   -> NEEDS_REVIEW
   otherwise                                                                  -> VERIFIED (with warnings)
 """
 
@@ -108,6 +110,7 @@ def verify(
     use_temporal: bool,
     use_conflicts: bool,
     as_of: str = "",
+    answer_check: dict | None = None,
 ) -> Verification:
     if not gating:
         if not evidence or generation is None or generation.get("cannot_answer"):
@@ -139,6 +142,19 @@ def verify(
         v.warnings.append(f"Ignored citations to non-existent evidence: {', '.join(v.invalid_citations)}")
     if not v.valid_citations:
         return _fail(v, INSUFFICIENT, "R4", "The answer has no valid citation to the provided evidence.")
+
+    if answer_check and not answer_check.get("answers_question", True):
+        missing = answer_check.get("missing") or "the specific information asked for"
+        return _fail(
+            v, INSUFFICIENT, "R9", f"The evidence-based draft does not answer the question (missing: {missing})."
+        )
+    if answer_check and not answer_check.get("supported", True):
+        why = (
+            f"answer check failed: {answer_check['error']}"
+            if answer_check.get("error")
+            else "some statements are not in the cited evidence"
+        )
+        _flag(v, "R10", f"Answer check: {why}.")
 
     cited = [by_label[c] for c in v.valid_citations]
     # the as-of date is given to the generator, so "as of 2026-10-01" is not an unsupported value

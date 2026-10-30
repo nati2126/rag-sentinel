@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     llm_model: str = "qwen2.5:7b-instruct"
     llm_num_ctx: int = 8192
     llm_temperature: float = 0.0
+    llm_seed: int = 7
     llm_timeout_s: float = 300.0
 
     # Embeddings (Ollama). nomic-embed-text expects task prefixes.

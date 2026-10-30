@@ -1,12 +1,15 @@
 """Run the VersionConflict benchmark.
 
-    python -m evaluation.run --split dev  --pipelines B4 --min-relevance 0      # tuning run
-    python -m evaluation.tune                                                   # pick thresholds on dev
-    python -m evaluation.run --split test --pipelines B0,B1,B2,B3,B4 --ablations
+    python -m evaluation.run --split dev --min-relevance 0          # development splits: dev, test_v1
+    python -m evaluation.tune --splits dev,test_v1                  # pick the relevance gate on development data
+    python -m evaluation.run --split test_v2 --ablations            # held-out split, run once
+    python -m evaluation.run --split test_v2 --pipelines B0,B3,B4 --llm-temperature 0.3 --llm-seed 1 --tag s1
 
-Each split gets its own knowledge base in data/bench_<split>. Per-question records are appended to
-results/<split>_records.jsonl (a finished pipeline is skipped on re-run unless --force), and metrics are
-written to results/<split>_summary.json. Nothing in the summary is hand-edited.
+Each split gets its own knowledge base in data/bench_<split>. Per-question records go to
+results/<split>[__<tag>]_records.jsonl (a finished pipeline is skipped on re-run unless --force), and metrics
+to results/<split>[__<tag>]_summary.json. Nothing in the summary is hand-edited. Tagged runs reuse the split's
+knowledge base, so they vary only query-time sampling (generation and answer check); ingestion, claims and
+cached judge verdicts are shared.
 """
 
 from __future__ import annotations
@@ -39,9 +42,17 @@ def load_questions(split: str) -> list[dict]:
         return [json.loads(line) for line in fh if line.strip()]
 
 
-def bench_settings(split: str, min_relevance: float | None) -> Settings:
+SPLITS = ["dev", "test_v1", "test_v2"]
+
+
+def bench_settings(split: str, min_relevance: float | None, temperature: float | None = None,
+                   seed: int | None = None) -> Settings:  # fmt: skip
     base = Settings()
     update = {"data_dir": ROOT / "data" / f"bench_{split}", "as_of": AS_OF}
+    if temperature is not None:
+        update["llm_temperature"] = temperature
+    if seed is not None:
+        update["llm_seed"] = seed
     tuned = RESULTS / "tuned.json"
     if min_relevance is not None:
         update["min_relevance"] = min_relevance
@@ -170,37 +181,51 @@ def summarize(records: list[dict]) -> dict:
         "decision_accuracy": M.safe_div(sum(decision(r) == r["expected_decision"] for r in records), n),
         "reliability": M.safe_div(sum(success(r) for r in records), n),
         "reliability_ci95": M.bootstrap_ci([success(r) for r in records]),
+        "reliability_ci95_clustered": M.cluster_bootstrap_ci(
+            [success(r) for r in records], [r["group"] for r in records]
+        ),
         "latency_ms": {"mean": M.mean(lat), "p50": M.percentile(lat, 50), "p95": M.percentile(lat, 95)},
         "reliability_by_category": {c: M.safe_div(sum(v), len(v)) for c, v in sorted(by_cat.items())},
         "counts": {
+            "questions": n,
+            "reliable": sum(success(r) for r in records),
             "verified_gold": len(verified_gold),
+            "correct_presented": sum(r["correct"] for r in verified_gold),
+            "over_abstained": sum(not r["presented"] for r in verified_gold),
             "abstain_gold": len(abstain_gold),
+            "unsupported_presented": sum(r["presented"] for r in abstain_gold),
             "stale_questions": len(stale_q),
+            "stale_presented": sum(r["stale"] for r in stale_q),
+            "groups": len({r["group"] for r in records}),
         },
     }
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", choices=["dev", "test"], required=True)
+    ap.add_argument("--split", choices=SPLITS, required=True)
     ap.add_argument("--pipelines", default="B0,B1,B2,B3,B4")
     ap.add_argument("--ablations", action="store_true")
     ap.add_argument("--rebuild", action="store_true", help="re-ingest the corpus")
     ap.add_argument("--force", action="store_true", help="re-run pipelines that already have records")
     ap.add_argument("--min-relevance", type=float, default=None)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--tag", default="", help="suffix for result files (repeated runs)")
+    ap.add_argument("--llm-temperature", type=float, default=None)
+    ap.add_argument("--llm-seed", type=int, default=None)
     args = ap.parse_args()
     setup_logging("WARNING")
 
     RESULTS.mkdir(exist_ok=True)
-    settings = bench_settings(args.split, args.min_relevance)
+    settings = bench_settings(args.split, args.min_relevance, args.llm_temperature, args.llm_seed)
+    stem = args.split + (f"__{args.tag}" if args.tag else "")
     kb, ingest = build_kb(args.split, settings, args.rebuild)
     questions = load_questions(args.split)[: args.limit]
     for q in questions:
         q["has_stale"] = bool(q["stale"])
 
     names = [p for p in args.pipelines.split(",") if p] + ([a.name for a in ABLATIONS] if args.ablations else [])
-    rec_path = RESULTS / f"{args.split}_records.jsonl"
+    rec_path = RESULTS / f"{stem}_records.jsonl"
     existing: dict[str, list[dict]] = defaultdict(list)
     if rec_path.exists():
         for line in rec_path.read_text(encoding="utf-8").splitlines():
@@ -233,6 +258,7 @@ def main() -> None:
     order = [p for p in PIPELINES if p in all_records]
     summary = {
         "split": args.split,
+        "tag": args.tag,
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "as_of": AS_OF.isoformat(),
         "questions": len(questions),
@@ -241,6 +267,8 @@ def main() -> None:
             "embedder": settings.embed_model,
             "reranker": settings.reranker_model,
             "min_relevance": settings.min_relevance,
+            "llm_temperature": settings.llm_temperature,
+            "llm_seed": settings.llm_seed,
             "authority_margin": settings.authority_margin,
             "predicate_similarity": settings.predicate_similarity,
             "python": platform.python_version(),
@@ -254,10 +282,12 @@ def main() -> None:
         b4 = [success(r) for r in all_records["B4"]]
         summary["comparisons_vs_B4"] = {
             p: {"reliability_diff": M.paired_bootstrap_diff([success(r) for r in all_records[p]], b4),
+                "reliability_diff_clustered": M.paired_cluster_bootstrap_diff(
+                    [success(r) for r in all_records[p]], b4, [r["group"] for r in all_records["B4"]]),
                 "mcnemar": M.mcnemar_exact([success(r) for r in all_records[p]], b4)}
             for p in order if p != "B4"
         }  # fmt: skip
-    out = RESULTS / f"{args.split}_summary.json"
+    out = RESULTS / f"{stem}_summary.json"
     out.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
     print(f"wrote {out}")
     kb.vectors.close()

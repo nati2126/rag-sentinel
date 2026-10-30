@@ -122,6 +122,53 @@ def paired_bootstrap_diff(a: Sequence[float], b: Sequence[float], n: int = 2000,
     }
 
 
+def _clusters(clusters: Sequence[str]) -> list[list[int]]:
+    groups: dict[str, list[int]] = {}
+    for i, c in enumerate(clusters):
+        groups.setdefault(c, []).append(i)
+    return list(groups.values())
+
+
+def cluster_bootstrap_ci(
+    values: Sequence[float], clusters: Sequence[str], n: int = 2000, seed: int = 13
+) -> tuple[float, float] | None:
+    """95% CI for the mean when items are correlated within clusters (questions sharing a document group).
+
+    Whole clusters are resampled with replacement, so the interval reflects how much the result depends on
+    which document groups happen to be in the benchmark.
+    """
+    if not values or len(values) != len(clusters):
+        return None
+    groups = _clusters(clusters)
+    rng = random.Random(seed)
+    samples = []
+    for _ in range(n):
+        idx = [i for _ in groups for i in groups[rng.randrange(len(groups))]]
+        samples.append(sum(values[i] for i in idx) / len(idx))
+    samples.sort()
+    return round(samples[int(0.025 * n)], 4), round(samples[int(0.975 * n) - 1], 4)
+
+
+def paired_cluster_bootstrap_diff(
+    a: Sequence[float], b: Sequence[float], clusters: Sequence[str], n: int = 2000, seed: int = 13
+) -> dict | None:
+    """Like paired_bootstrap_diff, resampling whole clusters (document groups) instead of questions."""
+    if not a or len(a) != len(b) or len(a) != len(clusters):
+        return None
+    groups = _clusters(clusters)
+    rng = random.Random(seed)
+    diffs = []
+    for _ in range(n):
+        idx = [i for _ in groups for i in groups[rng.randrange(len(groups))]]
+        diffs.append(sum(b[i] - a[i] for i in idx) / len(idx))
+    diffs.sort()
+    return {
+        "diff": round((sum(b) - sum(a)) / len(a), 4),
+        "ci95": [round(diffs[int(0.025 * n)], 4), round(diffs[int(0.975 * n) - 1], 4)],
+        "clusters": len(groups),
+    }
+
+
 def mcnemar_exact(a: Sequence[int], b: Sequence[int]) -> dict:
     """Exact (binomial) McNemar test on paired binary outcomes."""
     b01 = sum(1 for x, y in zip(a, b, strict=True) if x == 0 and y == 1)

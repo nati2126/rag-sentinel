@@ -91,6 +91,7 @@ class KnowledgeBase:
             settings.llm_num_ctx,
             settings.llm_temperature,
             settings.llm_timeout_s,
+            seed=settings.llm_seed,
         )
         reranker = (
             CrossEncoderReranker(settings.reranker_model, settings.reranker_device) if settings.reranker_model else None
@@ -298,6 +299,7 @@ class KnowledgeBase:
                                                          doc_b_id=f.claim_b.doc_id, kind=f.kind)  # fmt: skip
                     row.predicate_key, row.kind, row.confirmed = f.predicate_key, f.kind, f.confirmed
                     row.margin, row.explanation, row.detected_by = f.margin, f.explanation, f.detected_by
+                    row.judge_opinion = f.judge_opinion
                     if row.status == "open":
                         row.preferred_doc_id = f.preferred_doc_id
                     s.add(row)

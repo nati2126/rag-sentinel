@@ -43,3 +43,22 @@ def test_conflict_pair_matching_is_order_free_and_value_aware():
     s = M.conflict_scores(found, gold)
     assert (s["tp"], s["fp"], s["fn"]) == (1, 1, 0)
     assert s["kind_accuracy_on_matched_gold_pairs"] == 0.5
+
+
+def test_cluster_bootstrap_is_wider_when_outcomes_cluster():
+    from evaluation.metrics import bootstrap_ci, cluster_bootstrap_ci
+
+    # 10 groups of 5 questions; whole groups succeed or fail together
+    values = [1] * 25 + [0] * 25
+    clusters = [f"g{i // 5}" for i in range(50)]
+    lo, hi = cluster_bootstrap_ci(values, clusters)
+    lo_iid, hi_iid = bootstrap_ci(values)
+    assert lo <= 0.5 <= hi and (hi - lo) > (hi_iid - lo_iid)
+
+
+def test_paired_cluster_bootstrap_diff_reports_clusters():
+    from evaluation.metrics import paired_cluster_bootstrap_diff
+
+    a, b = [0, 0, 1, 1], [1, 1, 1, 1]
+    res = paired_cluster_bootstrap_diff(a, b, ["x", "x", "y", "y"])
+    assert res["diff"] == 0.5 and res["clusters"] == 2 and res["ci95"][0] >= 0

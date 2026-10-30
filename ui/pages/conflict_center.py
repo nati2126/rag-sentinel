@@ -27,6 +27,8 @@ for r in sorted(rows, key=lambda r: (order.get(r["kind"], 9), r["predicate_key"]
     head = f"{KIND_LABEL.get(r['kind'], r['kind'])} · `{r['predicate_key']}`"
     if r["kind"] == "outdated" and not r["confirmed"]:
         head += " · possible (needs review)"
+    if r.get("judge_opinion"):
+        head += f" · contested by LLM judge ({r['judge_opinion'].replace('_', ' ')})"
     with st.expander(head, expanded=r["kind"] == "contradiction" and not r["preferred_doc_id"]):
         st.markdown(r["explanation"])
         a, b = st.columns(2)

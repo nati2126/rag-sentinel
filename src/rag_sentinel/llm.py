@@ -42,12 +42,13 @@ class OllamaLLM:
         temperature: float = 0.0,
         timeout: float = 300,
         num_predict: int = 2048,
+        seed: int = 7,
     ):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.name = model
         # num_predict stops runaway generations (a 7B model occasionally loops on a token)
-        self.options = {"temperature": temperature, "num_ctx": num_ctx, "seed": 7, "num_predict": num_predict}
+        self.options = {"temperature": temperature, "num_ctx": num_ctx, "seed": seed, "num_predict": num_predict}
         self.client = httpx.Client(timeout=timeout)
 
     def _chat(self, messages: list[dict], schema: dict, options: dict | None = None) -> str:

@@ -87,7 +87,9 @@ class Conflict(SQLModel, table=True):
     preferred_doc_id: str | None = None
     margin: float | None = None
     explanation: str = ""
-    detected_by: str = "rule"  # rule | llm
+    detected_by: str = "rule"  # rule | llm | rule+llm | llm_error
+    # LLM judge verdict when it disagrees with a rule finding; the finding is kept, never erased by the judge
+    judge_opinion: str | None = None
     status: str = "open"  # open | resolved | dismissed
     resolution_note: str | None = None
     resolved_at: datetime | None = None
@@ -142,6 +144,21 @@ class Database:
             cur.close()
 
         SQLModel.metadata.create_all(self.engine)
+        self._add_missing_columns()
+
+    def _add_missing_columns(self) -> None:
+        """Additive migration: create_all does not add columns to existing tables (all new columns are nullable)."""
+        from sqlalchemy import inspect, text
+
+        insp = inspect(self.engine)
+        with self.engine.begin() as conn:
+            for table in SQLModel.metadata.sorted_tables:
+                if not insp.has_table(table.name):
+                    continue
+                have = {c["name"] for c in insp.get_columns(table.name)}
+                for column in table.columns:
+                    if column.name not in have and column.nullable:
+                        conn.execute(text(f"ALTER TABLE {table.name} ADD COLUMN {column.name} {column.type.compile()}"))
 
     @contextmanager
     def session(self) -> Iterator[Session]:

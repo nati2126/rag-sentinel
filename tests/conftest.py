@@ -48,9 +48,14 @@ def settings(tmp_path: Path) -> Settings:
                     use_llm_conflict_judge=False, _env_file=None)  # fmt: skip
 
 
+def accept_answer(system: str, user: str) -> dict:
+    """Answer-check double that accepts every draft (tests that need a rejection script their own)."""
+    return {"answers_question": True, "supported": True, "missing": ""}
+
+
 @pytest.fixture
 def scripted_llm() -> ScriptedLLM:
-    return ScriptedLLM({"ClaimList": regex_claims})
+    return ScriptedLLM({"ClaimList": regex_claims, "AnswerCheck": accept_answer})
 
 
 @pytest.fixture

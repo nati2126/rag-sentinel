@@ -18,10 +18,11 @@ from typing import Annotated, Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from rag_sentinel.agent.answer_check import make_answer_checker
 from rag_sentinel.agent.generation import SYSTEM as GEN_SYSTEM
 from rag_sentinel.agent.generation import GeneratedAnswer, build_prompt
 from rag_sentinel.agent.query_analysis import analyze_query
-from rag_sentinel.agent.verification import ANSWERED, INSUFFICIENT, VERIFIED, verify
+from rag_sentinel.agent.verification import ANSWERED, INSUFFICIENT, VERIFIED, citations_in, verify
 from rag_sentinel.conflicts.detect import ConflictDetector, make_pair_judge
 from rag_sentinel.db import Claim, Document
 from rag_sentinel.ingest.versioning import valid_from
@@ -46,6 +47,7 @@ class SentinelState(TypedDict, total=False):
     conflicts: list[dict[str, Any]]
     evidence: list[dict[str, Any]]
     generation: dict[str, Any] | None
+    answer_check: dict[str, Any] | None
     verification: dict[str, Any]
     result: dict[str, Any]
     trace: Annotated[list[dict[str, Any]], operator.add]
@@ -71,7 +73,7 @@ class SentinelAgent:
     def _build(self):
         g = StateGraph(SentinelState)
         for name in ("analyze_query", "retrieve", "extract_claims", "detect_conflicts", "rank_evidence",
-                     "generate_answer", "verify_evidence", "final_decision"):  # fmt: skip
+                     "generate_answer", "check_answer", "verify_evidence", "final_decision"):  # fmt: skip
             g.add_node(name, getattr(self, name))
         g.add_edge(START, "analyze_query")
         g.add_edge("analyze_query", "retrieve")
@@ -79,7 +81,8 @@ class SentinelAgent:
         g.add_edge("extract_claims", "detect_conflicts")
         g.add_edge("detect_conflicts", "rank_evidence")
         g.add_conditional_edges("rank_evidence", self._has_evidence, {"yes": "generate_answer", "no": "final_decision"})
-        g.add_edge("generate_answer", "verify_evidence")
+        g.add_edge("generate_answer", "check_answer")
+        g.add_edge("check_answer", "verify_evidence")
         g.add_edge("verify_evidence", "final_decision")
         g.add_edge("final_decision", END)
         return g.compile()
@@ -157,7 +160,7 @@ class SentinelAgent:
             out.append({
                 "id": f.id, "predicate_key": f.predicate_key, "kind": f.kind, "confirmed": f.confirmed,
                 "preferred_doc_id": preferred, "margin": f.margin, "explanation": f.explanation,
-                "detected_by": f.detected_by, "status": status,
+                "detected_by": f.detected_by, "judge_opinion": f.judge_opinion, "status": status,
                 "resolution_note": row.resolution_note if row else None,
                 "doc_a_id": f.claim_a.doc_id, "doc_b_id": f.claim_b.doc_id,
                 "claim_a": claim_dict(f.claim_a), "claim_b": claim_dict(f.claim_b),
@@ -242,6 +245,26 @@ class SentinelAgent:
         return {"generation": gen.model_dump(),
                 "trace": [_tr("generate_answer", t, "declined" if gen.cannot_answer else f"cited {gen.citations}")]}  # fmt: skip
 
+    def check_answer(self, state: SentinelState) -> dict:
+        t = time.perf_counter()
+        gen = state.get("generation")
+        if not (self.p.answer_check and self.p.gating) or not gen or gen.get("cannot_answer") or self.kb.llm is None:
+            return {"answer_check": None, "trace": [_tr("check_answer", t, "skipped")]}
+        by_label = {e["label"]: e for e in state["evidence"]}
+        cited = [by_label[c] for c in citations_in(gen["answer"], gen.get("citations", [])) if c in by_label]
+        if not cited:
+            return {"answer_check": None, "trace": [_tr("check_answer", t, "skipped (no valid citation)")]}
+        checker = make_answer_checker(self.kb.llm, self.kb.db.cache_get, self.kb.db.cache_set)
+        try:
+            res = checker(state["question"], gen["answer"], cited).model_dump()
+        except LLMError as exc:
+            # the check failed: record it so verification flags the answer for review instead of trusting it
+            res = {"answers_question": True, "supported": False, "missing": "", "error": str(exc)[:200]}
+        detail = (
+            "error" if res.get("error") else f"answers_question={res['answers_question']} supported={res['supported']}"
+        )
+        return {"answer_check": res, "trace": [_tr("check_answer", t, detail)]}
+
     def verify_evidence(self, state: SentinelState) -> dict:
         t = time.perf_counter()
         v = verify(
@@ -250,6 +273,7 @@ class SentinelAgent:
             use_relevance_gate=self.p.rerank, min_relevance=self.settings.min_relevance,
             use_temporal=self.p.temporal_ranking, use_conflicts=self.p.conflict_detection,
             as_of=state["analysis"]["as_of"] if self.p.metadata_in_prompt else "",
+            answer_check=state.get("answer_check"),
         )  # fmt: skip
         return {"verification": v.to_dict(),
                 "trace": [_tr("verify_evidence", t, f"{v.status} rules={v.rules_fired or ['none']}")]}  # fmt: skip

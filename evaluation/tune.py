@@ -1,12 +1,13 @@
-"""Tune the relevance gate (min_relevance) on the dev split, offline.
+"""Tune the relevance gate (min_relevance) on development splits, offline.
 
-Uses the dev B4 records produced with min_relevance=0: raising the threshold only turns answers whose best
-evidence relevance is below it into abstentions, so every candidate can be scored without re-running the LLM.
-The threshold with the highest dev reliability wins; ties go to the lowest threshold (fewest refusals).
-The test split is never looked at.
+Uses B4 records produced with min_relevance=0: raising the threshold only turns answers whose best evidence
+relevance is below it into abstentions, so every candidate can be scored without re-running the LLM.
+Candidates are midpoints between observed relevances. The threshold with the highest pooled reliability
+wins; ties go to the lowest threshold (fewest refusals). The held-out split (test_v2) is never read.
 
     python -m evaluation.run --split dev --min-relevance 0 --force
-    python -m evaluation.tune
+    python -m evaluation.run --split test_v1 --min-relevance 0 --force
+    python -m evaluation.tune --splits dev,test_v1
 """
 
 from __future__ import annotations
@@ -29,21 +30,29 @@ def simulate(records: list[dict], threshold: float) -> list[dict]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--pipeline", default="B4")
+    ap.add_argument("--splits", default="dev,test_v1")
     args = ap.parse_args()
 
-    summary = json.loads((RESULTS / "dev_summary.json").read_text(encoding="utf-8"))
-    used = summary["environment"]["min_relevance"]
-    if used != 0:
-        raise SystemExit(f"dev records were produced with min_relevance={used}; re-run dev with --min-relevance 0")
-    records = [
-        r
-        for line in (RESULTS / "dev_records.jsonl").read_text(encoding="utf-8").splitlines()
-        if (r := json.loads(line))["pipeline"] == args.pipeline
-    ]
-    if not records:
-        raise SystemExit(f"no dev records for {args.pipeline}")
+    splits = [x for x in args.splits.split(",") if x]
+    if "test_v2" in splits:
+        raise SystemExit("test_v2 is the held-out split; it must not be used for tuning")
+    records: list[dict] = []
+    for split in splits:
+        summary = json.loads((RESULTS / f"{split}_summary.json").read_text(encoding="utf-8"))
+        used = summary["environment"]["min_relevance"]
+        if used != 0:
+            raise SystemExit(f"{split} records were produced with min_relevance={used}; re-run with --min-relevance 0")
+        recs = [
+            r
+            for line in (RESULTS / f"{split}_records.jsonl").read_text(encoding="utf-8").splitlines()
+            if (r := json.loads(line))["pipeline"] == args.pipeline
+        ]
+        if not recs:
+            raise SystemExit(f"no {split} records for {args.pipeline}")
+        records += recs
 
-    candidates = sorted({0.0, *(round(r["top_relevance"] + 1e-4, 4) for r in records)})
+    rels = sorted({r["top_relevance"] for r in records})
+    candidates = [0.0] + [round((x + y) / 2, 4) for x, y in zip(rels, rels[1:], strict=False)]
     rows = []
     for t in candidates:
         sim = simulate(records, t)
@@ -61,11 +70,11 @@ def main() -> None:
               f"abstentions={row['abstentions']}{mark}")  # fmt: skip
     out = {
         "min_relevance": best["min_relevance"],
-        "tuned_on": "dev",
+        "tuned_on": splits,
         "pipeline": args.pipeline,
-        "dev_questions": len(records),
-        "dev_reliability_at_threshold": best["reliability"],
-        "dev_reliability_at_zero": rows[0]["reliability"],
+        "questions": len(records),
+        "reliability_at_threshold": best["reliability"],
+        "reliability_at_zero": rows[0]["reliability"],
         "sweep": rows,
     }
     (RESULTS / "tuned.json").write_text(json.dumps(out, indent=2), encoding="utf-8")

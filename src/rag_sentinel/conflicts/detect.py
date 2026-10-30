@@ -2,12 +2,17 @@
 
 For every pair of claims that share a canonical predicate (from different documents):
 
-1. Context check (subject + qualifier). With the LLM judge enabled, any context difference (including
-   disjoint subject words: "new hire" vs "employee") is judged semantically. Without the judge, disjoint
-   subjects -> different_context and other differences -> insufficient_evidence (conservative).
-2. Value check (deterministic normalization). Equal -> agreement (no finding). With the judge enabled every
-   other pair is confirmed by it (extracted qualifiers often miss scope such as the approver), so a value
-   difference never becomes a finding on string evidence alone.
+1. Context check (subject + qualifier) and value check (deterministic normalization). Equal values -> no
+   finding. The rules then either decide or say they cannot:
+   - definite: same subject (or one contains the other) and qualifiers, comparable values that differ, and
+     neither document states several values for the attribute;
+   - undecided: qualifiers differ, values are not comparable, a document states several values for the
+     attribute (a scope the extractor missed, e.g. "$500 needs a director, $10,000 the CFO"), or the
+     subjects share no words but a judge is available ("new hire" vs "employee").
+2. Arbitration. Undecided pairs go to the LLM judge (without it: insufficient_evidence, or different_context
+   for disjoint subjects). For definite pairs the judge only gives a second opinion: agreement is recorded
+   (detected_by "rule+llm"), disagreement is stored as `judge_opinion` and shown for review, but the LLM
+   never erases or downgrades a rule finding.
 3. Same fact, different values -> temporal/authority analysis:
    - same lineage (version family or supersession chain)          -> historical
      (or pending_change when the differing version is a newer draft / not yet effective)
@@ -147,6 +152,7 @@ class Finding:
     margin: float | None
     explanation: str
     detected_by: str
+    judge_opinion: str | None = None  # set when the LLM judge disagrees with a rule finding
 
 
 def finding_id(a: Claim, b: Claim) -> str:
@@ -185,6 +191,11 @@ class ConflictDetector:
         self.by_key: dict[str, list[Claim]] = defaultdict(list)
         for c in self.claims:
             self.by_key[c.predicate_key].append(c)
+        values: dict[tuple[str, str], set[str]] = defaultdict(set)
+        for c in self.claims:
+            values[(c.doc_id, c.predicate_key)].add(c.value_norm)
+        # (doc, key) pairs where one document states several values: the claims carry a scope we did not extract
+        self._multi_valued = {k for k, v in values.items() if len(v) > 1}
 
     def detect(self, keys: set[str] | None = None) -> list[Finding]:
         out: list[Finding] = []
@@ -212,28 +223,56 @@ class ConflictDetector:
             if eq is True:
                 return None
             return self._make(a, b, DIFFERENT_CONTEXT, f"Different subjects: '{a.subject}' vs '{b.subject}'.", "rule")
-        detected_by = "rule"
-        if ctx == "ambiguous" or eq is None or self.judge is not None:
-            if self.judge is None:
-                why = "conditions differ" if ctx == "ambiguous" else "values are not directly comparable"
-                return self._make(
-                    a, b, INSUFFICIENT, f"Cannot compare reliably ({why}); semantic judge disabled.", "rule"
-                )
-            try:
-                rel = self.judge(a, b)
-            except LLMOutputError as exc:
-                # recorded as a finding for review, never silently dropped or guessed
-                return self._make(
-                    a, b, INSUFFICIENT, f"Semantic judge failed on this pair: {str(exc)[:200]}", "llm_error"
-                )
-            detected_by = "llm"
-            if rel in ("equivalent", "unrelated"):
-                return None
-            if rel == "different_context":
-                return self._make(a, b, DIFFERENT_CONTEXT, "Judged to apply to different contexts.", "llm")
-            if rel == "complementary":
-                return self._make(a, b, COMPLEMENTARY, "Judged complementary (different aspects).", "llm")
-        return self._temporal(a, b, detected_by)
+        hidden_scope = (a.doc_id, a.predicate_key) in self._multi_valued or (
+            b.doc_id,
+            b.predicate_key,
+        ) in self._multi_valued
+        if ctx == "ambiguous" or eq is None or hidden_scope:
+            return self._judge_led(a, b, ctx, eq, hidden_scope)
+        finding = self._temporal(a, b, "rule")
+        if self.judge is not None and finding.kind in ACTIONABLE:
+            self._second_opinion(finding)
+        return finding
+
+    def _judge_led(self, a: Claim, b: Claim, ctx: str, eq: bool | None, hidden_scope: bool) -> Finding | None:
+        """The rules cannot decide; the LLM judge classifies the pair (or, without one, flag it for review)."""
+        if self.judge is None:
+            why = (
+                "conditions differ"
+                if ctx == "ambiguous"
+                else "values are not directly comparable"
+                if eq is None
+                else "a document states several values for this attribute"
+            )
+            return self._make(a, b, INSUFFICIENT, f"Cannot compare reliably ({why}); semantic judge disabled.", "rule")
+        try:
+            rel = self.judge(a, b)
+        except LLMOutputError as exc:
+            # recorded as a finding for review, never silently dropped or guessed
+            return self._make(a, b, INSUFFICIENT, f"Semantic judge failed on this pair: {str(exc)[:200]}", "llm_error")
+        if rel in ("equivalent", "unrelated"):
+            return None
+        if rel == "different_context":
+            return self._make(a, b, DIFFERENT_CONTEXT, "Judged to apply to different contexts.", "llm")
+        if rel == "complementary":
+            return self._make(a, b, COMPLEMENTARY, "Judged complementary (different aspects).", "llm")
+        return self._temporal(a, b, "llm")
+
+    def _second_opinion(self, f: Finding) -> None:
+        """Ask the judge about a rule finding. Agreement raises confidence; disagreement is recorded, not applied."""
+        try:
+            rel = self.judge(f.claim_a, f.claim_b)
+        except LLMOutputError:
+            f.explanation += " (Semantic second opinion unavailable.)"
+            return
+        if rel == "same_fact_conflict":
+            f.detected_by = "rule+llm"
+            return
+        f.judge_opinion = rel
+        f.explanation += (
+            f" The semantic judge considers these claims {rel.replace('_', ' ')}; the finding is kept for review "
+            "because subject, attribute and values match by rule."
+        )
 
     def _temporal(self, a: Claim, b: Claim, detected_by: str) -> Finding:
         da, db = self.docs[a.doc_id], self.docs[b.doc_id]
