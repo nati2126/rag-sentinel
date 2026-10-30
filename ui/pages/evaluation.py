@@ -9,12 +9,13 @@ page_setup(
 )
 
 data = safe(get, "/evaluation") or {}
-summaries = {k.replace("_summary", ""): v for k, v in data.items() if k.endswith("_summary")}
+# `<split>__<tag>_summary` files are repeated runs with other seeds; evaluation.variance summarizes them
+summaries = {k.replace("_summary", ""): v for k, v in data.items() if k.endswith("_summary") and "__" not in k}
 if not summaries:
-    st.info("No experiment results yet. Run: `python -m evaluation.run --split test --ablations`")
+    st.info("No experiment results yet. Run: `python -m evaluation.run --split test_v2 --ablations`")
     st.stop()
 
-split = st.radio("Split", sorted(summaries, key=lambda s: s != "test"), horizontal=True)
+split = st.radio("Split", sorted(summaries, key=lambda s: s != "test_v2"), horizontal=True)
 S = summaries[split]
 env = S["environment"]
 st.caption(

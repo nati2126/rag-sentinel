@@ -111,15 +111,20 @@ development machine. The native setup above is the verified path.
 ## Evaluation
 
 ```powershell
-# 1. dev split, relevance gate off, then tune the gate on dev only
-.venv\Scripts\python.exe -m evaluation.run --split dev --rebuild --force --min-relevance 0
-.venv\Scripts\python.exe -m evaluation.tune
-# 2. held-out test split with all baselines and ablations (about 1-2 h on an RTX 4070)
-.venv\Scripts\python.exe -m evaluation.run --split test --rebuild --ablations
+# 1. development splits with the relevance gate off, then tune the gate on them (tune refuses test_v2)
+.venv\Scripts\python.exe -m evaluation.run --split dev --rebuild --force --min-relevance 0 --ablations
+.venv\Scripts\python.exe -m evaluation.run --split test_v1 --rebuild --force --min-relevance 0 --ablations
+.venv\Scripts\python.exe -m evaluation.tune --splits dev,test_v1
+# 2. held-out split, once, with the tuned gate (about 1 h on an RTX 4070)
+.venv\Scripts\python.exe -m evaluation.run --split test_v2 --rebuild --ablations
+# 3. repeated runs with sampling (reuse the knowledge base), then the variance table
+foreach ($s in 1..3) { .venv\Scripts\python.exe -m evaluation.run --split test_v2 --pipelines B0,B3,B4 --llm-temperature 0.3 --llm-seed $s --tag "s$s" }
+.venv\Scripts\python.exe -m evaluation.variance --split test_v2 --tags s1,s2,s3
+.venv\Scripts\python.exe -m evaluation.report --split test_v2
 ```
 
-Results go to `results/` (`<split>_records.jsonl` per question, `<split>_summary.json`) and appear on the
-Evaluation page. See [docs/evaluation_report.md](docs/evaluation_report.md) for the analysis.
+Results go to `results/` (`<split>[__<tag>]_records.jsonl` per question, `<split>[__<tag>]_summary.json`) and
+appear on the Evaluation page. See [docs/evaluation_report.md](docs/evaluation_report.md) for the analysis.
 
 ## Tests
 
@@ -134,7 +139,7 @@ Evaluation page. See [docs/evaluation_report.md](docs/evaluation_report.md) for 
 src/rag_sentinel/   ingest/ retrieval/ claims/ conflicts/ agent/ api/ kb.py ranking.py pipelines.py
 ui/                 Streamlit dashboard
 benchmark/          VersionConflict corpus, questions, gold conflicts
-evaluation/         runner, metrics, threshold tuning
+evaluation/         runner, metrics, threshold tuning, report and variance tables
 tests/              unit (fakes) and integration (real models)
 docs/               architecture, evaluation report, demo script
 ```
