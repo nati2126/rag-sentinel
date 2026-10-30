@@ -8,3 +8,4 @@ data/
 !benchmark/**
 *.egg-info/
 .DS_Store
+models/

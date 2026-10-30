@@ -1,0 +1,36 @@
+# docker compose up --build
+# Before the first run:
+#   docker compose exec ollama ollama pull qwen2.5:7b-instruct
+#   docker compose exec ollama ollama pull nomic-embed-text
+# and put BAAI/bge-reranker-base into ./models/hf (or set SENTINEL_HF_OFFLINE=false once to download it).
+# NOTE: untested on the development machine; the native Windows setup in README.md is the verified path.
+services:
+  ollama:
+    image: ollama/ollama:0.33.3
+    volumes:
+      - ./models/ollama:/root/.ollama
+    ports: ["11434:11434"]
+    # GPU: uncomment with the NVIDIA container toolkit installed
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{ driver: nvidia, count: 1, capabilities: [gpu] }]
+
+  api:
+    build: .
+    environment:
+      SENTINEL_OLLAMA_URL: http://ollama:11434
+      SENTINEL_HF_OFFLINE: "true"
+    volumes:
+      - ./data:/data
+      - ./models/hf:/models/hf
+    ports: ["8000:8000"]
+    depends_on: [ollama]
+
+  ui:
+    build: .
+    command: ["streamlit", "run", "ui/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
+    environment:
+      SENTINEL_API_URL: http://api:8000
+    ports: ["8501:8501"]
+    depends_on: [api]

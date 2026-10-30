@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+          enable-cache: true
+      - name: Install
+        run: uv sync --frozen
+      - name: Lint
+        run: |
+          uv run ruff check src evaluation tests ui benchmark
+          uv run ruff format --check src evaluation tests ui benchmark
+      # Unit tests use explicit test doubles (tests/fakes.py). Tests that need Ollama and the
+      # reranker are marked `integration` and run locally only.
+      - name: Unit tests
+        run: uv run pytest -m "not integration" -q
