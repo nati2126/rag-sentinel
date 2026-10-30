@@ -1,0 +1,18 @@
+[
+  {"a": "travel_quick_guide.pdf", "a_value": "$50", "b": "travel_policy_2026.md", "b_value": "$60", "kind": "outdated", "topic": "meal per diem"},
+  {"a": "travel_quick_guide.pdf", "a_value": "$180", "b": "travel_policy_2026.md", "b_value": "$200", "kind": "outdated", "topic": "hotel limit"},
+  {"a": "data_retention_policy.md", "a_value": "90 days", "b": "security_logging_standard.md", "b_value": "180 days", "kind": "contradiction", "topic": "application log retention"},
+  {"a": "security_awareness_slides.md", "a_value": "48 hours", "b": "incident_response_policy.md", "b_value": "24 hours", "kind": "outdated", "topic": "incident reporting"},
+  {"a": "benefits_overview_2025.md", "a_value": "12 weeks", "b": "parental_leave_policy_2026.md", "b_value": "16 weeks", "kind": "outdated", "topic": "primary caregiver leave"},
+  {"a": "customer_contract_template.md", "a_value": "1 hour", "b": "support_sla_v2.md", "b_value": "30 minutes", "kind": "outdated", "topic": "P1 response"},
+  {"a": "support_team_wiki.md", "a_value": "2 business days", "b": "support_sla_v2.md", "b_value": "1 business day", "kind": "outdated", "topic": "P3 response"},
+  {"a": "legacy_integration_runbook.md", "a_value": "TLS 1.0", "b": "cryptography_standard_2026.md", "b_value": "TLS 1.2", "kind": "outdated", "topic": "minimum TLS"},
+  {"a": "it_faq.md", "a_value": "3 years", "b": "hardware_lifecycle_policy_2026.pdf", "b_value": "4 years", "kind": "outdated", "topic": "laptop replacement"},
+  {"a": "incident_response_policy.md", "a_value": "24 hours", "b": "privacy_breach_procedure.md", "b_value": "72 hours", "kind": "different_context", "topic": "internal reporting vs regulator notification"},
+  {"a": "support_sla_v1.md", "a_value": "1 hour", "b": "support_sla_v2.md", "b_value": "30 minutes", "kind": "historical", "topic": "P1 response"},
+  {"a": "parental_leave_policy_2024.md", "a_value": "12 weeks", "b": "parental_leave_policy_2026.md", "b_value": "16 weeks", "kind": "historical", "topic": "primary caregiver leave"},
+  {"a": "it_asset_standard_2023.docx", "a_value": "3 years", "b": "hardware_lifecycle_policy_2026.pdf", "b_value": "4 years", "kind": "historical", "topic": "laptop replacement"},
+  {"a": "tls_standard_2019.md", "a_value": "TLS 1.0", "b": "cryptography_standard_2026.md", "b_value": "TLS 1.2", "kind": "historical", "topic": "minimum TLS"},
+  {"a": "remote_work_policy_v1.md", "a_value": "2 days", "b": "remote_work_policy_v2_draft.md", "b_value": "4 days", "kind": "pending_change", "topic": "remote days"},
+  {"a": "travel_policy_2026.md", "a_value": "$60", "b": "travel_policy_2027.md", "b_value": "$70", "kind": "pending_change", "topic": "meal per diem"}
+]

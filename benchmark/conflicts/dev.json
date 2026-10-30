@@ -1,0 +1,13 @@
+[
+  {"a": "employee_handbook_2025.md", "a_value": "20 days", "b": "leave_policy_v2.md", "b_value": "25 days", "kind": "outdated", "topic": "annual leave"},
+  {"a": "onboarding_guide.md", "a_value": "20 days", "b": "leave_policy_v2.md", "b_value": "25 days", "kind": "outdated", "topic": "annual leave"},
+  {"a": "employee_handbook_2025.md", "a_value": "10 days", "b": "sick_leave_policy.md", "b_value": "12 days", "kind": "outdated", "topic": "sick leave"},
+  {"a": "it_helpdesk_wiki.md", "a_value": "8 characters", "b": "password_standard_v2.md", "b_value": "12 characters", "kind": "outdated", "topic": "password length"},
+  {"a": "it_helpdesk_wiki.md", "a_value": "90 days", "b": "password_standard_v2.md", "b_value": "compromise", "kind": "outdated", "topic": "password rotation"},
+  {"a": "finance_approval_matrix.md", "a_value": "$500", "b": "procurement_standard.md", "b_value": "$1,000", "kind": "contradiction", "topic": "director approval threshold"},
+  {"a": "leave_policy_v1.md", "a_value": "20 days", "b": "leave_policy_v2.md", "b_value": "25 days", "kind": "historical", "topic": "annual leave"},
+  {"a": "password_standard_v1.md", "a_value": "8 characters", "b": "password_standard_v2.md", "b_value": "12 characters", "kind": "historical", "topic": "password length"},
+  {"a": "password_standard_v1.md", "a_value": "5", "b": "password_standard_v2.md", "b_value": "10", "kind": "historical", "topic": "lockout"},
+  {"a": "contractor_faq.md", "a_value": "10 days", "b": "leave_policy_v2.md", "b_value": "25 days", "kind": "different_context", "topic": "contractor vs employee leave"},
+  {"a": "nist_sp800_63b_summary.md", "a_value": "8 characters", "b": "password_standard_v2.md", "b_value": "12 characters", "kind": "different_context", "topic": "external minimum vs internal policy"}
+]
