@@ -141,6 +141,7 @@ docs/               architecture, evaluation report, demo script
 
 ## Limitations
 
+* The LLM conflict judge can overrule correct rule decisions (known regression, see the evaluation report).
 * Claim extraction with a 7B model misses facts and sometimes mislabels scope (for example the approver in
   "purchases above $500 need director approval"). Detection quality depends on it.
 * Embedded Qdrant is single-process; use Qdrant server for concurrent writers.

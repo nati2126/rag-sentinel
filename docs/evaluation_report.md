@@ -210,6 +210,15 @@ scoping, and the judge prompts), so its numbers are optimistic. B4 dev reliabili
   question" behaviour cause most failures. The rules can only verify what extraction produces.
 * **Latency.** B4 p95 is 4.6 s against 1.8 s for B0 (extra rerank, claim lookup and judge calls on
   uncached pairs).
+* **Known regression found after the test run.** To stop a false contradiction on dev ("$10,000 needs CFO
+  approval" vs "$1,000 needs director approval": the extractor had dropped the approver), every non-equal
+  claim pair is sent to the LLM judge when it is enabled. The judge can then overrule a correct rule
+  decision. The real-model integration test shows this: "all employees: 20 days" vs "full-time employees:
+  25 days" is judged a different context, so the handbook is not flagged as outdated. The test is marked as
+  an expected failure (`tests/integration/test_real_models.py`). A likely fix is to consult the judge only
+  when the rules see a context difference, or when one document states several values for the same
+  attribute (a sign that the extractor missed a qualifier). That fix needs a fresh dev and test run, and
+  was not made, so the code matches the reported results.
 * **Single run.** All outputs are at temperature 0 with a fixed seed, so a rerun should reproduce them
   closely. Variance across seeds or models was not measured.
 
