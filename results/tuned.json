@@ -1,0 +1,418 @@
+{
+  "min_relevance": 0.0,
+  "tuned_on": [
+    "dev",
+    "test_v1"
+  ],
+  "pipeline": "B4",
+  "questions": 114,
+  "reliability_at_threshold": 0.9561,
+  "reliability_at_zero": 0.9561,
+  "sweep": [
+    {
+      "min_relevance": 0.0,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.0009,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.0013,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.0017,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.007,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.0152,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.019,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.0227,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.0384,
+      "reliability": 0.9561,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.052,
+      "reliability": 0.9474,
+      "abstentions": 26
+    },
+    {
+      "min_relevance": 0.0668,
+      "reliability": 0.9474,
+      "abstentions": 26
+    },
+    {
+      "min_relevance": 0.0804,
+      "reliability": 0.9386,
+      "abstentions": 27
+    },
+    {
+      "min_relevance": 0.1152,
+      "reliability": 0.9298,
+      "abstentions": 28
+    },
+    {
+      "min_relevance": 0.1623,
+      "reliability": 0.9298,
+      "abstentions": 28
+    },
+    {
+      "min_relevance": 0.1767,
+      "reliability": 0.9298,
+      "abstentions": 28
+    },
+    {
+      "min_relevance": 0.2726,
+      "reliability": 0.9298,
+      "abstentions": 28
+    },
+    {
+      "min_relevance": 0.3722,
+      "reliability": 0.9298,
+      "abstentions": 28
+    },
+    {
+      "min_relevance": 0.4669,
+      "reliability": 0.9298,
+      "abstentions": 28
+    },
+    {
+      "min_relevance": 0.5563,
+      "reliability": 0.9211,
+      "abstentions": 29
+    },
+    {
+      "min_relevance": 0.5575,
+      "reliability": 0.9298,
+      "abstentions": 30
+    },
+    {
+      "min_relevance": 0.6134,
+      "reliability": 0.9211,
+      "abstentions": 31
+    },
+    {
+      "min_relevance": 0.671,
+      "reliability": 0.9123,
+      "abstentions": 32
+    },
+    {
+      "min_relevance": 0.7078,
+      "reliability": 0.9035,
+      "abstentions": 33
+    },
+    {
+      "min_relevance": 0.7534,
+      "reliability": 0.8947,
+      "abstentions": 34
+    },
+    {
+      "min_relevance": 0.8026,
+      "reliability": 0.8947,
+      "abstentions": 34
+    },
+    {
+      "min_relevance": 0.8502,
+      "reliability": 0.886,
+      "abstentions": 35
+    },
+    {
+      "min_relevance": 0.8684,
+      "reliability": 0.8772,
+      "abstentions": 36
+    },
+    {
+      "min_relevance": 0.8768,
+      "reliability": 0.8772,
+      "abstentions": 36
+    },
+    {
+      "min_relevance": 0.8808,
+      "reliability": 0.8684,
+      "abstentions": 37
+    },
+    {
+      "min_relevance": 0.8867,
+      "reliability": 0.8684,
+      "abstentions": 37
+    },
+    {
+      "min_relevance": 0.8914,
+      "reliability": 0.8596,
+      "abstentions": 38
+    },
+    {
+      "min_relevance": 0.9105,
+      "reliability": 0.8596,
+      "abstentions": 38
+    },
+    {
+      "min_relevance": 0.93,
+      "reliability": 0.8509,
+      "abstentions": 39
+    },
+    {
+      "min_relevance": 0.9334,
+      "reliability": 0.8421,
+      "abstentions": 40
+    },
+    {
+      "min_relevance": 0.9444,
+      "reliability": 0.8333,
+      "abstentions": 41
+    },
+    {
+      "min_relevance": 0.9579,
+      "reliability": 0.8246,
+      "abstentions": 42
+    },
+    {
+      "min_relevance": 0.9629,
+      "reliability": 0.8158,
+      "abstentions": 43
+    },
+    {
+      "min_relevance": 0.9655,
+      "reliability": 0.807,
+      "abstentions": 44
+    },
+    {
+      "min_relevance": 0.9669,
+      "reliability": 0.7982,
+      "abstentions": 45
+    },
+    {
+      "min_relevance": 0.9679,
+      "reliability": 0.7895,
+      "abstentions": 46
+    },
+    {
+      "min_relevance": 0.9692,
+      "reliability": 0.7807,
+      "abstentions": 47
+    },
+    {
+      "min_relevance": 0.971,
+      "reliability": 0.7719,
+      "abstentions": 48
+    },
+    {
+      "min_relevance": 0.9743,
+      "reliability": 0.7632,
+      "abstentions": 49
+    },
+    {
+      "min_relevance": 0.9774,
+      "reliability": 0.7544,
+      "abstentions": 50
+    },
+    {
+      "min_relevance": 0.9801,
+      "reliability": 0.7456,
+      "abstentions": 51
+    },
+    {
+      "min_relevance": 0.9831,
+      "reliability": 0.7281,
+      "abstentions": 54
+    },
+    {
+      "min_relevance": 0.9845,
+      "reliability": 0.7193,
+      "abstentions": 55
+    },
+    {
+      "min_relevance": 0.9858,
+      "reliability": 0.7018,
+      "abstentions": 57
+    },
+    {
+      "min_relevance": 0.9865,
+      "reliability": 0.693,
+      "abstentions": 58
+    },
+    {
+      "min_relevance": 0.9868,
+      "reliability": 0.6842,
+      "abstentions": 59
+    },
+    {
+      "min_relevance": 0.9871,
+      "reliability": 0.6754,
+      "abstentions": 60
+    },
+    {
+      "min_relevance": 0.9873,
+      "reliability": 0.6667,
+      "abstentions": 61
+    },
+    {
+      "min_relevance": 0.9891,
+      "reliability": 0.6491,
+      "abstentions": 63
+    },
+    {
+      "min_relevance": 0.9909,
+      "reliability": 0.6404,
+      "abstentions": 64
+    },
+    {
+      "min_relevance": 0.9916,
+      "reliability": 0.6316,
+      "abstentions": 65
+    },
+    {
+      "min_relevance": 0.9931,
+      "reliability": 0.6228,
+      "abstentions": 66
+    },
+    {
+      "min_relevance": 0.9944,
+      "reliability": 0.614,
+      "abstentions": 67
+    },
+    {
+      "min_relevance": 0.995,
+      "reliability": 0.6053,
+      "abstentions": 68
+    },
+    {
+      "min_relevance": 0.9956,
+      "reliability": 0.5877,
+      "abstentions": 70
+    },
+    {
+      "min_relevance": 0.996,
+      "reliability": 0.5789,
+      "abstentions": 71
+    },
+    {
+      "min_relevance": 0.9962,
+      "reliability": 0.5789,
+      "abstentions": 71
+    },
+    {
+      "min_relevance": 0.9965,
+      "reliability": 0.5614,
+      "abstentions": 73
+    },
+    {
+      "min_relevance": 0.9968,
+      "reliability": 0.5614,
+      "abstentions": 73
+    },
+    {
+      "min_relevance": 0.9971,
+      "reliability": 0.5702,
+      "abstentions": 74
+    },
+    {
+      "min_relevance": 0.9973,
+      "reliability": 0.5702,
+      "abstentions": 74
+    },
+    {
+      "min_relevance": 0.9974,
+      "reliability": 0.5614,
+      "abstentions": 75
+    },
+    {
+      "min_relevance": 0.9977,
+      "reliability": 0.5439,
+      "abstentions": 77
+    },
+    {
+      "min_relevance": 0.9982,
+      "reliability": 0.5175,
+      "abstentions": 80
+    },
+    {
+      "min_relevance": 0.9986,
+      "reliability": 0.5088,
+      "abstentions": 81
+    },
+    {
+      "min_relevance": 0.9987,
+      "reliability": 0.4912,
+      "abstentions": 83
+    },
+    {
+      "min_relevance": 0.9988,
+      "reliability": 0.4825,
+      "abstentions": 84
+    },
+    {
+      "min_relevance": 0.9989,
+      "reliability": 0.4649,
+      "abstentions": 86
+    },
+    {
+      "min_relevance": 0.999,
+      "reliability": 0.4211,
+      "abstentions": 91
+    },
+    {
+      "min_relevance": 0.9992,
+      "reliability": 0.4211,
+      "abstentions": 91
+    },
+    {
+      "min_relevance": 0.9993,
+      "reliability": 0.386,
+      "abstentions": 95
+    },
+    {
+      "min_relevance": 0.9994,
+      "reliability": 0.3421,
+      "abstentions": 100
+    },
+    {
+      "min_relevance": 0.9996,
+      "reliability": 0.307,
+      "abstentions": 104
+    },
+    {
+      "min_relevance": 0.9997,
+      "reliability": 0.2895,
+      "abstentions": 106
+    },
+    {
+      "min_relevance": 0.9998,
+      "reliability": 0.2719,
+      "abstentions": 108
+    },
+    {
+      "min_relevance": 0.9999,
+      "reliability": 0.2368,
+      "abstentions": 112
+    },
+    {
+      "min_relevance": 1.0,
+      "reliability": 0.2281,
+      "abstentions": 113
+    }
+  ]
+}

@@ -1,5 +1,8 @@
 # Evaluation report: VersionConflict benchmark
 
+> **Archived v0.1 report.** Paths below refer to files now in `results/v0.1/`; the v0.1 test split is now
+> `benchmark/*/test_v1*` (development data in v0.2). See `docs/evaluation_report.md` for v0.2.
+
 All numbers below come from `results/test_summary.json` and `results/test_records.jsonl`, produced by
 `python -m evaluation.run --split test --rebuild --ablations` on 2026-10-30 (Windows 11, RTX 4070 8 GB,
 models served by local Ollama). The tables were rendered by `python -m evaluation.report --split test`.
