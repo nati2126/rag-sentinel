@@ -2,11 +2,17 @@
 
 For every pair of claims that share a canonical predicate (from different documents):
 
-1. Context check (subject + qualifier). Disjoint subjects (employee vs contractor) -> different_context.
-   Ambiguous context goes to the LLM judge when enabled, otherwise -> insufficient_evidence.
-2. Value check (deterministic normalization). Equal -> agreement (no finding). Not comparable -> LLM judge.
+1. Context check (subject + qualifier). With the LLM judge enabled, any context difference (including
+   disjoint subject words: "new hire" vs "employee") is judged semantically. Without the judge, disjoint
+   subjects -> different_context and other differences -> insufficient_evidence (conservative).
+2. Value check (deterministic normalization). Equal -> agreement (no finding). With the judge enabled every
+   other pair is confirmed by it (extracted qualifiers often miss scope such as the approver), so a value
+   difference never becomes a finding on string evidence alone.
 3. Same fact, different values -> temporal/authority analysis:
    - same lineage (version family or supersession chain)          -> historical
+     (or pending_change when the differing version is a newer draft / not yet effective)
+   - the losing doc is itself superseded or withdrawn              -> historical (nothing to update)
+   - the losing doc is a draft / not yet effective                 -> pending_change
    - lower-standing doc repeats a superseded value of the winner  -> outdated (confirmed)
    - clear standing margin, loser is older                        -> outdated (possible, needs review)
    - clear standing margin, loser is newer                        -> contradiction (resolvable: preferred source)
@@ -36,6 +42,7 @@ from rag_sentinel.ranking import standing
 CONTRADICTION = "contradiction"
 OUTDATED = "outdated"
 HISTORICAL = "historical"
+PENDING_CHANGE = "pending_change"
 DIFFERENT_CONTEXT = "different_context"
 COMPLEMENTARY = "complementary"
 INSUFFICIENT = "insufficient_evidence"
@@ -44,6 +51,8 @@ ACTIONABLE = (CONTRADICTION, OUTDATED)
 _SYNONYMS = {
     "employees": "employee", "staff": "employee", "personnel": "employee", "worker": "employee",
     "workers": "employee", "people": "employee", "colleague": "employee", "colleagues": "employee",
+    "hire": "employee", "hires": "employee", "starter": "employee", "starters": "employee", "joiner": "employee",
+    "joiners": "employee", "newcomer": "employee", "newcomers": "employee",
     "contractors": "contractor", "consultant": "contractor", "consultants": "contractor", "vendors": "vendor",
     "passwords": "password", "accounts": "account", "users": "user", "laptops": "laptop", "devices": "device",
     "fulltime": "full-time", "parttime": "part-time",
@@ -55,7 +64,9 @@ _CTX_STOP = {"all", "the", "a", "an", "of", "for", "each", "every", "any", "our"
 def context_tokens(text: str | None) -> frozenset[str]:
     if not text:
         return frozenset()
-    toks = re.findall(r"[a-z0-9][a-z0-9\-]*", text.lower().replace("full time", "full-time").replace("part time", "part-time"))
+    toks = re.findall(
+        r"[a-z0-9][a-z0-9\-]*", text.lower().replace("full time", "full-time").replace("part time", "part-time")
+    )
     out = set()
     for t in toks:
         t = _SYNONYMS.get(t, t)
@@ -94,6 +105,7 @@ Classify the relation between A and B. Use exactly one of:
 - "same_fact_conflict": same attribute, same subject and scope, but the values disagree.
 - "equivalent": they state the same value (possibly worded differently).
 - "different_context": they apply to different subjects, groups, conditions or scopes, so both can be true.
+  (A group that is part of another counts as the same subject: new hires are employees.)
 - "complementary": they describe related but different aspects; no disagreement.
 - "unrelated": they are not about the same thing.
 Do not answer "same_fact_conflict" just because the numbers differ: check subject and conditions first."""
@@ -101,9 +113,11 @@ Do not answer "same_fact_conflict" just because the numbers differ: check subjec
 _VERDICT_KINDS = {"same_fact_conflict", "equivalent", "different_context", "complementary", "unrelated"}
 
 
-def make_pair_judge(llm: LLM, docs: dict[str, Document], cache_get=None, cache_set=None) -> Callable[[Claim, Claim], str]:
+def make_pair_judge(
+    llm: LLM, docs: dict[str, Document], cache_get=None, cache_set=None
+) -> Callable[[Claim, Claim], str]:
     def judge(a: Claim, b: Claim) -> str:
-        key = "pair:" + hashlib.sha256(f"{llm.name}|{min(a.id, b.id)}|{max(a.id, b.id)}|v2".encode()).hexdigest()
+        key = "pair:" + hashlib.sha256(f"{llm.name}|{min(a.id, b.id)}|{max(a.id, b.id)}|v3".encode()).hexdigest()
         if cache_get and (hit := cache_get(key)) is not None:
             return hit
         prompt = JUDGE_TEMPLATE.format(
@@ -192,15 +206,19 @@ class ConflictDetector:
         eq = values_equivalent(_nv(a), _nv(b))
         if eq is True and ctx != "different":
             return None
+        if ctx == "different" and self.judge is not None and eq is not True:
+            ctx = "ambiguous"  # disjoint subject words ("new hire" vs "employee") may still be the same group
         if ctx == "different":
             if eq is True:
                 return None
             return self._make(a, b, DIFFERENT_CONTEXT, f"Different subjects: '{a.subject}' vs '{b.subject}'.", "rule")
         detected_by = "rule"
-        if ctx == "ambiguous" or eq is None:
+        if ctx == "ambiguous" or eq is None or self.judge is not None:
             if self.judge is None:
                 why = "conditions differ" if ctx == "ambiguous" else "values are not directly comparable"
-                return self._make(a, b, INSUFFICIENT, f"Cannot compare reliably ({why}); semantic judge disabled.", "rule")
+                return self._make(
+                    a, b, INSUFFICIENT, f"Cannot compare reliably ({why}); semantic judge disabled.", "rule"
+                )
             rel = self.judge(a, b)
             detected_by = "llm"
             if rel in ("equivalent", "unrelated"):
@@ -221,6 +239,16 @@ class ConflictDetector:
                 cur, old, cc, oc = db, da, b, a
             cur_st, old_st = self._standing[cur.id], self._standing[old.id]
             note = "in force" if cur_st.in_force else cur_st.status.replace("_", " ")
+            other_newer = self.lineage.is_ancestor(cur.id, old.id) or (
+                valid_from(old) is not None and valid_from(cur) is not None and valid_from(old) > valid_from(cur)
+            )
+            if cur_st.in_force and other_newer and old_st.status in ("unapproved", "not_yet_effective"):
+                return self._make(
+                    a, b, PENDING_CHANGE,
+                    f"{_label(old)} ({old_st.status.replace('_', ' ')}) would change '{cc.value}' to '{oc.value}'; "
+                    f"{_label(cur)} remains in force at {self.as_of}.",
+                    detected_by, preferred=cur.id, confirmed=True,
+                )  # fmt: skip
             return self._make(
                 a, b, HISTORICAL,
                 f"Version difference within one document lineage: {_label(cur)} states '{cc.value}' "
@@ -230,6 +258,20 @@ class ConflictDetector:
 
         (win, wc, ws), (lose, lc, ls) = sorted(((da, a, sa), (db, b, sb)), key=lambda t: -t[2].score)
         margin = round(ws.score - ls.score, 4)
+        if ls.status in ("superseded", "withdrawn"):
+            return self._make(
+                a, b, HISTORICAL,
+                f"{_label(lose)} ('{lc.value}') is {ls.status} at {self.as_of}; {_label(win)} states '{wc.value}'. "
+                "No update needed.",
+                detected_by, preferred=win.id if ws.in_force else None, margin=margin, confirmed=True,
+            )  # fmt: skip
+        if ws.in_force and ls.status in ("unapproved", "not_yet_effective"):
+            return self._make(
+                a, b, PENDING_CHANGE,
+                f"{_label(lose)} ({ls.status.replace('_', ' ')}) states '{lc.value}'; {_label(win)} ('{wc.value}') "
+                f"is in force at {self.as_of}.",
+                detected_by, preferred=win.id, margin=margin, confirmed=True,
+            )  # fmt: skip
         old_values = self._superseded_values(win, a.predicate_key)
         if lc.value_norm in old_values:
             src = old_values[lc.value_norm]
@@ -278,7 +320,9 @@ class ConflictDetector:
         self, a: Claim, b: Claim, kind: str, explanation: str, detected_by: str,
         preferred: str | None = None, margin: float | None = None, confirmed: bool = True,
     ) -> Finding:  # fmt: skip
-        return Finding(finding_id(a, b), a.predicate_key, a, b, kind, confirmed, preferred, margin, explanation, detected_by)
+        return Finding(
+            finding_id(a, b), a.predicate_key, a, b, kind, confirmed, preferred, margin, explanation, detected_by
+        )
 
 
 def naive_value_conflicts(claims: list[Claim]) -> list[tuple[Claim, Claim]]:

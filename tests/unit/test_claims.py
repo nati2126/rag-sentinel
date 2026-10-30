@@ -36,7 +36,8 @@ def test_values_equivalent_rules():
     assert values_equivalent(n("20 days"), n("25 days")) is False
     assert values_equivalent(n("20 working days"), n("4 weeks")) is None  # not reliably comparable
     assert values_equivalent(n("$50"), n("€50")) is None
-    assert values_equivalent(n("TLS 1.2"), n("TLS 1.3")) is None  # text -> needs semantic judge
+    assert values_equivalent(n("TLS 1.2"), n("TLS 1.3")) is False  # same named product, different version
+    assert values_equivalent(n("containerd"), n("Docker Engine")) is None  # free text -> needs semantic judge
     assert values_equivalent(n("required"), n("optional")) is False
 
 
@@ -69,7 +70,10 @@ def test_hallucinated_claims_are_rejected():
     ]})  # fmt: skip
     rep = to_claims(raw, "c1", "d1", "Intro. Employees get 25 days. End.", "test")
     assert [c.predicate for c in rep.accepted] == ["annual_leave"]
-    assert {reason for _, reason in rep.rejected} == {"source_quote not found in passage", "value not stated in source_quote"}
+    assert {reason for _, reason in rep.rejected} == {
+        "source_quote not found in passage",
+        "value not stated in source_quote",
+    }
     assert rep.accepted[0].value_norm == "25 day"
 
 
@@ -91,7 +95,13 @@ def _label_embed(table):
 def test_canonicalize_merges_identical_and_judged_names():
     vecs = {"annual leave days": [1, 0, 0], "annual leave entitlement": [0.97, 0.243, 0],
             "annual leave carryover": [0.9, 0.0, 0.436], "meal per diem": [0, 0, 1]}  # fmt: skip
-    preds = ["annual_leave_days", "annual_leave_days", "annual_leave_entitlement", "annual_leave_carryover", "meal_per_diem"]
+    preds = [
+        "annual_leave_days",
+        "annual_leave_days",
+        "annual_leave_entitlement",
+        "annual_leave_carryover",
+        "meal_per_diem",
+    ]
 
     def judge(a, b, qa, qb):
         return "carryover" not in (a + b)

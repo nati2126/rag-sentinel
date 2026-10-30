@@ -86,9 +86,15 @@ class KnowledgeBase:
             settings.embed_batch,
         )  # fmt: skip
         llm = OllamaLLM(
-            settings.ollama_url, settings.llm_model, settings.llm_num_ctx, settings.llm_temperature, settings.llm_timeout_s
+            settings.ollama_url,
+            settings.llm_model,
+            settings.llm_num_ctx,
+            settings.llm_temperature,
+            settings.llm_timeout_s,
         )
-        reranker = CrossEncoderReranker(settings.reranker_model, settings.reranker_device) if settings.reranker_model else None
+        reranker = (
+            CrossEncoderReranker(settings.reranker_model, settings.reranker_device) if settings.reranker_model else None
+        )
         return cls(settings, embedder, llm, reranker)
 
     # ------------------------------------------------------------------ ingestion
@@ -124,11 +130,14 @@ class KnowledgeBase:
             family = meta.family or family_from_filename(filename)
             sources.setdefault("family", "filename")
             warnings = list(extracted.warnings)
-            warnings += [f"{f} unknown (not in file or provided metadata)" for f in IMPORTANT_FIELDS if getattr(meta, f) is None]
+            warnings += [
+                f"{f} unknown (not in file or provided metadata)" for f in IMPORTANT_FIELDS if getattr(meta, f) is None
+            ]
 
             with self.db.session() as s:
                 previous = s.exec(
-                    select(Document).where(Document.family_id == family, Document.is_deleted == False)  # noqa: E712
+                    select(Document)
+                    .where(Document.family_id == family, Document.is_deleted == False)  # noqa: E712
                     .order_by(col(Document.version_number).desc())
                 ).first()
                 version_number = next_version_number(s, family)
@@ -390,7 +399,9 @@ class KnowledgeBase:
             self.refresh_analysis()
             return len(ids)
 
-    def resolve_conflict(self, conflict_id: str, status: str, preferred_doc_id: str | None, note: str | None) -> Conflict:
+    def resolve_conflict(
+        self, conflict_id: str, status: str, preferred_doc_id: str | None, note: str | None
+    ) -> Conflict:
         if status not in ("open", "resolved", "dismissed"):
             raise ValueError("status must be open, resolved or dismissed")
         with self.db.session() as s:
@@ -458,7 +469,9 @@ class KnowledgeBase:
         with self.db.session() as s:
             return list(s.exec(select(Claim).where(col(Claim.chunk_id).in_(chunk_ids))).all())
 
-    def conflicts(self, kind: str | None = None, status: str | None = None, keys: set[str] | None = None) -> list[Conflict]:
+    def conflicts(
+        self, kind: str | None = None, status: str | None = None, keys: set[str] | None = None
+    ) -> list[Conflict]:
         with self.db.session() as s:
             stmt = select(Conflict)
             if kind:
@@ -513,7 +526,9 @@ class KnowledgeBase:
         open_actionable = [c for c in conflicts if c.kind in ACTIONABLE and c.status == "open"]
         docs_with_issues = {c.doc_a_id for c in open_actionable} | {c.doc_b_id for c in open_actionable}
         completeness = {
-            f: round(sum(1 for d in active if getattr(d, f) not in (None, "unknown")) / len(active), 3) if active else 0.0
+            f: round(sum(1 for d in active if getattr(d, f) not in (None, "unknown")) / len(active), 3)
+            if active
+            else 0.0
             for f in IMPORTANT_FIELDS
         }
         return {
@@ -529,7 +544,9 @@ class KnowledgeBase:
             "conflicts_by_kind": dict(Counter(c.kind for c in conflicts)),
             "open_contradictions": sum(1 for c in open_actionable if c.kind == "contradiction"),
             "outdated_references": sum(1 for c in conflicts if c.kind == "outdated" and c.status == "open"),
-            "unresolved_contradictions": sum(1 for c in open_actionable if c.kind == "contradiction" and not c.preferred_doc_id),
+            "unresolved_contradictions": sum(
+                1 for c in open_actionable if c.kind == "contradiction" and not c.preferred_doc_id
+            ),
             "documents_with_open_issues": len(docs_with_issues),
             "health_score": round(1 - len(docs_with_issues) / len(active), 3) if active else 1.0,
             "metadata_completeness": completeness,

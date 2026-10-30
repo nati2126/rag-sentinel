@@ -116,7 +116,9 @@ def _extract_docx(path: Path) -> ExtractedDocument:
         "source_org": (cp.author or "").strip() or None,
         "version": (cp.version or "").strip() or None,
     }
-    return ExtractedDocument("docx", [Page(None, "\n\n".join(blocks))], file_metadata={k: v for k, v in meta.items() if v})
+    return ExtractedDocument(
+        "docx", [Page(None, "\n\n".join(blocks))], file_metadata={k: v for k, v in meta.items() if v}
+    )
 
 
 # --- Markdown --------------------------------------------------------------

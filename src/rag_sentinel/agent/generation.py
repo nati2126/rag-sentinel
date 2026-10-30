@@ -48,8 +48,9 @@ def build_prompt(
         "Answer using ONLY the evidence above.",
         "After every sentence, cite the evidence label(s) that support it, e.g. [E1] or [E1][E3].",
         "List every label you cited in `citations`.",
-        "If the evidence does not contain the answer, set cannot_answer to true, leave citations empty, "
-        "and explain what is missing in `reason`.",
+        "If the evidence does not contain the specific information asked for (for example the question asks "
+        "for a name, number or date the evidence never states), set cannot_answer to true, leave citations "
+        "empty, and explain what is missing in `reason`. Do not answer a related but different question.",
         "Keep the answer short: 1 to 3 sentences.",
     ]
     if include_metadata:

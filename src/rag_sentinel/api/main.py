@@ -139,7 +139,9 @@ def create_app(kb: KnowledgeBase | None = None) -> FastAPI:
         out = []
         for d in k.list_documents(include_deleted):
             row = as_dict(d)
-            row["superseded"] = (not d.is_deleted) and lineage.superseded_at(d.id, as_of)[0] if d.id in lineage.docs else False
+            row["superseded"] = (
+                (not d.is_deleted) and lineage.superseded_at(d.id, as_of)[0] if d.id in lineage.docs else False
+            )
             out.append(row)
         return out
 

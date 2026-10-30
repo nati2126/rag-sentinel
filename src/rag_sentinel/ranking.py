@@ -125,7 +125,10 @@ def rank_evidence(
             "in_force_factor": st.factor,
         }
         base = (
-            w.relevance * h.relevance + w.authority * st.authority + w.approval * st.approval + w.recency * factors["recency"]
+            w.relevance * h.relevance
+            + w.authority * st.authority
+            + w.approval * st.approval
+            + w.recency * factors["recency"]
         ) / total
         score = round(base * st.factor, 4)
         explanation = "; ".join(st.reasons) + f"; relevance {h.relevance:.2f}"

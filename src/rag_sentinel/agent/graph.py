@@ -116,7 +116,10 @@ class SentinelAgent:
                               final_k=RANK_POOL)  # fmt: skip
         hits = self.kb.retriever.retrieve(state["question"], cfg)
         out = [asdict(h) for h in hits]
-        return {"hits": out, "trace": [_tr("retrieve", t, f"{len(out)} hits ({self.p.retrieval_mode}, rerank={self.p.rerank})")]}
+        return {
+            "hits": out,
+            "trace": [_tr("retrieve", t, f"{len(out)} hits ({self.p.retrieval_mode}, rerank={self.p.rerank})")],
+        }
 
     def extract_claims(self, state: SentinelState) -> dict:
         t = time.perf_counter()
@@ -222,7 +225,10 @@ class SentinelAgent:
         notes = []
         if self.p.conflict_detection:
             for c in state["conflicts"]:
-                if c["kind"] in ("contradiction", "outdated", "historical") and c["status"] != "dismissed":
+                if (
+                    c["kind"] in ("contradiction", "outdated", "historical", "pending_change")
+                    and c["status"] != "dismissed"
+                ):
                     notes.append(c["explanation"])
         prompt = build_prompt(state["question"], state["evidence"], self.p.metadata_in_prompt,
                               state["analysis"]["as_of"], state["analysis"]["mode"], notes[:6])  # fmt: skip

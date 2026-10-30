@@ -127,8 +127,16 @@ def test_graph_b4_verified_with_trace(agent_kb):
     res = SentinelAgent(agent_kb, "B4").ask("How many days of annual leave do full-time employees get?")
     assert res["status"] == VERIFIED and "25 days" in res["answer"]
     assert res["citations"][0]["filename"] == "leave_policy_v2.md"
-    assert [t["node"] for t in res["trace"]] == ["analyze_query", "retrieve", "extract_claims", "detect_conflicts",
-                                                 "rank_evidence", "generate_answer", "verify_evidence", "final_decision"]
+    assert [t["node"] for t in res["trace"]] == [
+        "analyze_query",
+        "retrieve",
+        "extract_claims",
+        "detect_conflicts",
+        "rank_evidence",
+        "generate_answer",
+        "verify_evidence",
+        "final_decision",
+    ]
     assert any(c["kind"] == "outdated" for c in res["conflicts"])
     assert any("Conflict noted" in w for w in res["warnings"])
 

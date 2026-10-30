@@ -35,7 +35,9 @@ def test_missing_metadata_is_not_invented(kb, tmp_path):
 
 
 def test_user_metadata_overrides_and_is_tracked(kb, tmp_path):
-    r = kb.ingest_path(write_md(tmp_path, "x.md", {"authority_level": 2}, "Text."), user_metadata={"authority_level": 4})
+    r = kb.ingest_path(
+        write_md(tmp_path, "x.md", {"authority_level": 2}, "Text."), user_metadata={"authority_level": 4}
+    )
     assert r.document.authority_level == 4 and r.document.metadata_sources["authority_level"] == "user"
 
 

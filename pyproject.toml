@@ -62,9 +62,9 @@ markers = [
 addopts = "-ra"
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["B008"]
+ignore = ["B008", "E501"]  # line length is left to the formatter

@@ -8,6 +8,7 @@ from rag_sentinel.conflicts.detect import (
     HISTORICAL,
     INSUFFICIENT,
     OUTDATED,
+    PENDING_CHANGE,
     ConflictDetector,
     context_relation,
     naive_value_conflicts,
@@ -80,11 +81,22 @@ def test_older_lower_authority_doc_is_possibly_outdated():
     assert only.kind == OUTDATED and not only.confirmed
 
 
-def test_draft_revision_is_historical_and_approved_version_preferred():
-    docs = [doc("rw1", "remote", 1, date(2025, 9, 1), 5), doc("rw2", "remote", 2, date(2026, 9, 1), 5, status="draft")]
-    claims = [claim("a", "rw1", "2 days", key="remote_days"), claim("b", "rw2", "4 days", key="remote_days")]
+def test_draft_revision_is_pending_change_and_approved_version_preferred():
+    docs = [doc("rw1", "remote", 1, date(2025, 9, 1), 5), doc("rw2", "remote", 2, date(2026, 9, 1), 5, status="draft"),
+            doc("toolkit", eff=date(2026, 3, 1), auth=2)]  # fmt: skip
+    claims = [claim("a", "rw1", "2 days", key="remote_days"), claim("b", "rw2", "4 days", key="remote_days"),
+              claim("c", "toolkit", "2 days", key="remote_days")]  # fmt: skip
+    f = kinds(detector(docs, claims).detect())
+    assert f[("rw1", "rw2")].kind == PENDING_CHANGE and f[("rw1", "rw2")].preferred_doc_id == "rw1"
+    assert f[("rw2", "toolkit")].kind == PENDING_CHANGE  # a draft disagreeing is not an actionable conflict
+
+
+def test_already_superseded_document_needs_no_update():
+    docs = [doc("old", "tls", 1, date(2019, 6, 1), 5), doc("new", "crypto", 1, date(2026, 3, 1), 5, sup="old"),
+            doc("rfc", eff=date(2021, 3, 1), auth=4)]  # fmt: skip
+    claims = [claim("a", "old", "TLS 1.0", key="min_tls"), claim("b", "rfc", "TLS 1.2", key="min_tls")]
     (only,) = detector(docs, claims).detect()
-    assert only.kind == HISTORICAL and only.preferred_doc_id == "rw1"
+    assert only.kind == HISTORICAL
 
 
 def test_ambiguous_context_without_judge_is_insufficient_and_with_judge_follows_verdict():

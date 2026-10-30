@@ -161,9 +161,15 @@ def values_equivalent(a: NormalizedValue, b: NormalizedValue) -> bool | None:
         return abs(a.num - b.num) < 1e-9 if a.unit == b.unit else None
     if a.kind in ("percent", "date", "modal"):
         return a.norm == b.norm
-    return True if a.norm == b.norm else None
+    if a.norm == b.norm:
+        return True
+    va, vb = _NAMED_VERSION.fullmatch(a.norm), _NAMED_VERSION.fullmatch(b.norm)
+    if va and vb and va.group(1) == vb.group(1):  # "tls 1.0" vs "tls 1.2": same product, different version
+        return False
+    return None
 
 
+_NAMED_VERSION = re.compile(r"([a-z][a-z+#]*) (\d+(?:\.\d+)*)")
 _ANY_NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 
 

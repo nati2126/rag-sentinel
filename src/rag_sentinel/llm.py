@@ -45,7 +45,13 @@ class OllamaLLM:
         try:
             r = self.client.post(
                 f"{self.base_url}/api/chat",
-                json={"model": self.model, "messages": messages, "format": schema, "stream": False, "options": self.options},
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "format": schema,
+                    "stream": False,
+                    "options": self.options,
+                },
             )
             r.raise_for_status()
         except httpx.HTTPError as exc:
@@ -65,10 +71,16 @@ class OllamaLLM:
                 return result
             except ValidationError as exc:
                 last_error = str(exc)
-                log.warning("invalid llm output", extra={"schema": schema.__name__, "attempt": attempt, "error": last_error[:300]})
+                log.warning(
+                    "invalid llm output",
+                    extra={"schema": schema.__name__, "attempt": attempt, "error": last_error[:300]},
+                )
                 messages += [
                     {"role": "assistant", "content": raw},
-                    {"role": "user", "content": f"Your JSON was invalid: {last_error[:800]}\nReturn corrected JSON only."},
+                    {
+                        "role": "user",
+                        "content": f"Your JSON was invalid: {last_error[:800]}\nReturn corrected JSON only.",
+                    },
                 ]
         raise LLMOutputError(f"{schema.__name__}: model output failed validation twice: {last_error[:500]}")
 

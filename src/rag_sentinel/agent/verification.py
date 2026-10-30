@@ -53,9 +53,21 @@ def citations_in(answer: str, listed: list[str]) -> list[str]:
     return out
 
 
-def unsupported_numbers(answer: str, cited_texts: list[str]) -> list[str]:
+_YEAR = re.compile(r"(19|20)\d\d")
+
+
+def unsupported_numbers(
+    answer: str, cited_texts: list[str], question: str = "", cited_meta: list[str] = ()
+) -> list[str]:
+    """Numbers in the answer that no cited passage contains.
+
+    Also accepted: numbers in the cited documents' title / version / effective date ("Password Standard v1.0"),
+    and years the question itself mentions ("in 2025"). Other question numbers are not accepted, so echoing
+    a premise like "30 days" from the question still needs evidence.
+    """
     text = _LABEL.sub(" ", answer)
-    supported = set().union(*(numbers_in(t) for t in cited_texts)) if cited_texts else set()
+    supported = set().union(*(numbers_in(t) for t in [*cited_texts, *cited_meta])) if cited_texts else set()
+    supported |= {f"{float(m.group()):g}" for m in _YEAR.finditer(question)}
     return sorted(n for n in numbers_in(text) if n not in supported)
 
 
@@ -100,7 +112,9 @@ def verify(
         return _fail(v, INSUFFICIENT, "R1", "No relevant evidence was retrieved.")
     top = max(e["relevance"] for e in evidence)
     if use_relevance_gate and top < min_relevance:
-        return _fail(v, INSUFFICIENT, "R1", f"Best evidence relevance {top:.3f} is below the threshold {min_relevance}.")
+        return _fail(
+            v, INSUFFICIENT, "R1", f"Best evidence relevance {top:.3f} is below the threshold {min_relevance}."
+        )
     if use_temporal and not any(e.get("standing_status") == "in_force" for e in evidence):
         return _fail(v, INSUFFICIENT, "R2", "None of the retrieved sources is approved and in force at the as-of date.")
     if generation is None or generation.get("cannot_answer"):
@@ -117,7 +131,8 @@ def verify(
         return _fail(v, INSUFFICIENT, "R4", "The answer has no valid citation to the provided evidence.")
 
     cited = [by_label[c] for c in v.valid_citations]
-    v.unsupported_values = unsupported_numbers(generation["answer"], [e["text"] for e in cited])
+    meta = [" ".join(str(e.get(k) or "") for k in ("title", "version", "effective_date")) for e in cited]
+    v.unsupported_values = unsupported_numbers(generation["answer"], [e["text"] for e in cited], question, meta)
     if v.unsupported_values:
         _flag(v, "R5", f"Answer states values not found in the cited evidence: {', '.join(v.unsupported_values)}.")
 
@@ -148,7 +163,9 @@ def verify(
                 else:
                     v.warnings.append(f"Conflict noted ({c['kind']}): {c['explanation']}")
             elif c["kind"] == "insufficient_evidence":
-                v.warnings.append(f"Possible inconsistency that could not be compared automatically: {c['explanation']}")
+                v.warnings.append(
+                    f"Possible inconsistency that could not be compared automatically: {c['explanation']}"
+                )
     return v
 
 

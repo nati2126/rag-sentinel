@@ -25,15 +25,19 @@ class SameAttribute(BaseModel):
 
 
 JUDGE_SYSTEM = "You compare attribute names extracted from documents. Output JSON only."
-JUDGE_TEMPLATE = """Two facts were extracted from different documents.
+JUDGE_TEMPLATE = """Two facts were extracted from different documents. Their attribute names were written by
+different people, so the wording often differs even when the meaning is the same.
 
 A: attribute "{a}", example: "{qa}"
 B: attribute "{b}", example: "{qb}"
 
-Do A and B describe the SAME attribute, so that their values could be directly compared
-(for example both are "the number of annual leave days an employee gets")?
-Answer false if one is a different aspect (e.g. carry-over vs entitlement, minimum vs maximum,
-reporting deadline vs resolution deadline)."""
+Answer true if A and B are the same attribute, i.e. the values answer the same question and could be
+compared directly. Examples of the SAME attribute:
+- "max upload size" / "file size limit for uploads"
+- "gift value threshold" / "amount above which gifts must be declared"
+- "backup frequency" / "backup schedule policy" (both say when backups run)
+Answer false if one is a different aspect, for example: carry-over vs entitlement, minimum vs maximum,
+reporting deadline vs resolution deadline, the rule itself vs the tool used to follow it."""
 
 
 def humanize(predicate: str) -> str:
@@ -42,7 +46,7 @@ def humanize(predicate: str) -> str:
 
 def make_llm_judge(llm: LLM, cache_get=None, cache_set=None) -> Callable[[str, str, str, str], bool]:
     def judge(a: str, b: str, qa: str, qb: str) -> bool:
-        key = f"same-attr:{llm.name}:{min(a, b)}|{max(a, b)}"
+        key = f"same-attr-v2:{llm.name}:{min(a, b)}|{max(a, b)}"
         if cache_get and (hit := cache_get(key)) is not None:
             return bool(hit)
         res = llm.chat_json(
