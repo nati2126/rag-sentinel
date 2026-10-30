@@ -1,0 +1,125 @@
+{
+  "min_relevance": 0.0,
+  "tuned_on": "dev",
+  "pipeline": "B4",
+  "dev_questions": 26,
+  "dev_reliability_at_threshold": 0.9615,
+  "dev_reliability_at_zero": 0.9615,
+  "sweep": [
+    {
+      "min_relevance": 0.0,
+      "reliability": 0.9615,
+      "abstentions": 4
+    },
+    {
+      "min_relevance": 0.0196,
+      "reliability": 0.9615,
+      "abstentions": 4
+    },
+    {
+      "min_relevance": 0.0508,
+      "reliability": 0.9231,
+      "abstentions": 5
+    },
+    {
+      "min_relevance": 0.0803,
+      "reliability": 0.8846,
+      "abstentions": 6
+    },
+    {
+      "min_relevance": 0.3669,
+      "reliability": 0.8846,
+      "abstentions": 6
+    },
+    {
+      "min_relevance": 0.3778,
+      "reliability": 0.8462,
+      "abstentions": 7
+    },
+    {
+      "min_relevance": 0.5587,
+      "reliability": 0.8077,
+      "abstentions": 8
+    },
+    {
+      "min_relevance": 0.6739,
+      "reliability": 0.7692,
+      "abstentions": 9
+    },
+    {
+      "min_relevance": 0.8604,
+      "reliability": 0.7308,
+      "abstentions": 10
+    },
+    {
+      "min_relevance": 0.8767,
+      "reliability": 0.7308,
+      "abstentions": 10
+    },
+    {
+      "min_relevance": 0.8847,
+      "reliability": 0.7692,
+      "abstentions": 11
+    },
+    {
+      "min_relevance": 0.9331,
+      "reliability": 0.7308,
+      "abstentions": 12
+    },
+    {
+      "min_relevance": 0.9824,
+      "reliability": 0.6923,
+      "abstentions": 13
+    },
+    {
+      "min_relevance": 0.9867,
+      "reliability": 0.6538,
+      "abstentions": 14
+    },
+    {
+      "min_relevance": 0.9955,
+      "reliability": 0.6154,
+      "abstentions": 15
+    },
+    {
+      "min_relevance": 0.9989,
+      "reliability": 0.5769,
+      "abstentions": 16
+    },
+    {
+      "min_relevance": 0.999,
+      "reliability": 0.5385,
+      "abstentions": 17
+    },
+    {
+      "min_relevance": 0.9993,
+      "reliability": 0.4231,
+      "abstentions": 20
+    },
+    {
+      "min_relevance": 0.9994,
+      "reliability": 0.3462,
+      "abstentions": 22
+    },
+    {
+      "min_relevance": 0.9995,
+      "reliability": 0.2692,
+      "abstentions": 24
+    },
+    {
+      "min_relevance": 0.9997,
+      "reliability": 0.2692,
+      "abstentions": 24
+    },
+    {
+      "min_relevance": 0.9998,
+      "reliability": 0.2308,
+      "abstentions": 25
+    },
+    {
+      "min_relevance": 0.9999,
+      "reliability": 0.1923,
+      "abstentions": 26
+    }
+  ]
+}

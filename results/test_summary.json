@@ -1,0 +1,999 @@
+{
+  "split": "test",
+  "generated_at": "2026-10-30T10:48:41+00:00",
+  "as_of": "2026-10-01",
+  "questions": 88,
+  "environment": {
+    "llm": "qwen2.5:7b-instruct",
+    "embedder": "nomic-embed-text",
+    "reranker": "BAAI/bge-reranker-base",
+    "min_relevance": 0.0,
+    "authority_margin": 0.12,
+    "predicate_similarity": 0.86,
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "ingestion": {
+    "documents": 44,
+    "chunks": 44,
+    "claims_accepted": 150,
+    "claims_rejected": 9,
+    "ingest_seconds": 358.2,
+    "warnings": {
+      "hardware_lifecycle_policy_2026.pdf": [
+        "supersedes 'it_asset_standard_2023.docx' not found yet; will resolve when it is ingested"
+      ],
+      "cryptography_standard_2026.md": [
+        "supersedes 'tls_standard_2019.md' not found yet; will resolve when it is ingested"
+      ]
+    }
+  },
+  "pipelines": {
+    "B0": {
+      "name": "B0",
+      "description": "Basic vector RAG (dense retrieval only)",
+      "retrieval_mode": "dense",
+      "rerank": false,
+      "temporal_ranking": false,
+      "ranking_preset": "default",
+      "metadata_in_prompt": false,
+      "conflict_detection": false,
+      "gating": false,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.8025,
+        "citation_precision": 0.6667,
+        "faithfulness_numeric": 0.9868,
+        "answer_accuracy": 0.8841,
+        "draft_answer_accuracy": 0.8841,
+        "stale_answer_rate": 0.2286,
+        "stale_draft_rate": 0.2286,
+        "unsupported_answer_rate": 0.3684,
+        "abstention_rate": 0.1364,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.6316,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.9205,
+        "reliability": 0.8295,
+        "reliability_ci95": [
+          0.75,
+          0.9091
+        ],
+        "latency_ms": {
+          "mean": 1305.8477,
+          "p50": 1232.4,
+          "p95": 1804.9
+        },
+        "reliability_by_category": {
+          "contradiction": 0.2,
+          "historical": 0.8,
+          "multi_doc": 0.8333,
+          "normal": 1.0,
+          "outdated": 0.7059,
+          "unanswerable": 0.8
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B1": {
+      "name": "B1",
+      "description": "Hybrid RAG (dense + BM25, RRF)",
+      "retrieval_mode": "hybrid",
+      "rerank": false,
+      "temporal_ranking": false,
+      "ranking_preset": "default",
+      "metadata_in_prompt": false,
+      "conflict_detection": false,
+      "gating": false,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.8162,
+        "citation_precision": 0.6392,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.8841,
+        "draft_answer_accuracy": 0.8841,
+        "stale_answer_rate": 0.2286,
+        "stale_draft_rate": 0.2286,
+        "unsupported_answer_rate": 0.3684,
+        "abstention_rate": 0.1364,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.6316,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.9205,
+        "reliability": 0.8295,
+        "reliability_ci95": [
+          0.75,
+          0.9091
+        ],
+        "latency_ms": {
+          "mean": 1249.2886,
+          "p50": 1176.8,
+          "p95": 1765.0
+        },
+        "reliability_by_category": {
+          "contradiction": 0.2,
+          "historical": 0.8,
+          "multi_doc": 0.8333,
+          "normal": 1.0,
+          "outdated": 0.7059,
+          "unanswerable": 0.8
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B2": {
+      "name": "B2",
+      "description": "Hybrid RAG + cross-encoder reranking",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": false,
+      "ranking_preset": "default",
+      "metadata_in_prompt": false,
+      "conflict_detection": false,
+      "gating": false,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.8516,
+        "citation_precision": 0.6739,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.8551,
+        "draft_answer_accuracy": 0.8551,
+        "stale_answer_rate": 0.2857,
+        "stale_draft_rate": 0.2857,
+        "unsupported_answer_rate": 0.4211,
+        "abstention_rate": 0.125,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.5789,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.9091,
+        "reliability": 0.7955,
+        "reliability_ci95": [
+          0.7045,
+          0.875
+        ],
+        "latency_ms": {
+          "mean": 2357.0966,
+          "p50": 2027.3,
+          "p95": 2630.4
+        },
+        "reliability_by_category": {
+          "contradiction": 0.2,
+          "historical": 0.7,
+          "multi_doc": 0.8333,
+          "normal": 1.0,
+          "outdated": 0.6471,
+          "unanswerable": 0.7333
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B3": {
+      "name": "B3",
+      "description": "B2 + temporal & authority-aware evidence ranking",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": false,
+      "gating": false,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.9566,
+        "citation_precision": 0.8765,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.971,
+        "draft_answer_accuracy": 0.971,
+        "stale_answer_rate": 0.0571,
+        "stale_draft_rate": 0.0571,
+        "unsupported_answer_rate": 0.3158,
+        "abstention_rate": 0.1477,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.6842,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.9318,
+        "reliability": 0.9091,
+        "reliability_ci95": [
+          0.8523,
+          0.9659
+        ],
+        "latency_ms": {
+          "mean": 2179.9909,
+          "p50": 2116.9,
+          "p95": 2844.7
+        },
+        "reliability_by_category": {
+          "contradiction": 0.2,
+          "historical": 1.0,
+          "multi_doc": 1.0,
+          "normal": 1.0,
+          "outdated": 0.8824,
+          "unanswerable": 0.8667
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B4": {
+      "name": "B4",
+      "description": "B3 + contradiction detection + evidence gating (RAG Sentinel)",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.9566,
+        "citation_precision": 0.9103,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.971,
+        "draft_answer_accuracy": 0.9855,
+        "stale_answer_rate": 0.0,
+        "stale_draft_rate": 0.0286,
+        "unsupported_answer_rate": 0.3158,
+        "abstention_rate": 0.1705,
+        "abstention_precision": 0.8667,
+        "abstention_recall": 0.6842,
+        "over_abstention_rate": 0.029,
+        "decision_accuracy": 0.8977,
+        "reliability": 0.9091,
+        "reliability_ci95": [
+          0.8523,
+          0.9659
+        ],
+        "latency_ms": {
+          "mean": 2840.6284,
+          "p50": 2288.9,
+          "p95": 4562.0
+        },
+        "reliability_by_category": {
+          "contradiction": 0.6,
+          "historical": 1.0,
+          "multi_doc": 1.0,
+          "normal": 0.9714,
+          "outdated": 0.9412,
+          "unanswerable": 0.7333
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B4-no-rerank": {
+      "name": "B4-no-rerank",
+      "description": "B4 without reranking (no calibrated relevance gate)",
+      "retrieval_mode": "hybrid",
+      "rerank": false,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 0.9726,
+        "mrr_at_5": 0.7459,
+        "citation_precision": 0.9211,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.9565,
+        "draft_answer_accuracy": 0.971,
+        "stale_answer_rate": 0.0,
+        "stale_draft_rate": 0.0,
+        "unsupported_answer_rate": 0.2105,
+        "abstention_rate": 0.2045,
+        "abstention_precision": 0.8333,
+        "abstention_recall": 0.7895,
+        "over_abstention_rate": 0.0435,
+        "decision_accuracy": 0.9205,
+        "reliability": 0.9205,
+        "reliability_ci95": [
+          0.8636,
+          0.9773
+        ],
+        "latency_ms": {
+          "mean": 2049.7057,
+          "p50": 1604.0,
+          "p95": 3729.7
+        },
+        "reliability_by_category": {
+          "contradiction": 0.6,
+          "historical": 1.0,
+          "multi_doc": 1.0,
+          "normal": 0.9143,
+          "outdated": 1.0,
+          "unanswerable": 0.8667
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B4-relevance-ranking": {
+      "name": "B4-relevance-ranking",
+      "description": "B4 with evidence ranked by relevance only",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "relevance_only",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.8516,
+        "citation_precision": 0.8256,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.9275,
+        "draft_answer_accuracy": 0.942,
+        "stale_answer_rate": 0.0571,
+        "stale_draft_rate": 0.1143,
+        "unsupported_answer_rate": 0.1579,
+        "abstention_rate": 0.2159,
+        "abstention_precision": 0.8421,
+        "abstention_recall": 0.8421,
+        "over_abstention_rate": 0.0435,
+        "decision_accuracy": 0.9091,
+        "reliability": 0.9091,
+        "reliability_ci95": [
+          0.8523,
+          0.9545
+        ],
+        "latency_ms": {
+          "mean": 3021.5057,
+          "p50": 2503.4,
+          "p95": 4675.6
+        },
+        "reliability_by_category": {
+          "contradiction": 0.6,
+          "historical": 1.0,
+          "multi_doc": 1.0,
+          "normal": 0.9714,
+          "outdated": 0.7647,
+          "unanswerable": 0.9333
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B4-newest-wins": {
+      "name": "B4-newest-wins",
+      "description": "B4 with naive newest-document-wins ranking",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "newest_wins",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 0.9703,
+        "mrr_at_5": 0.8071,
+        "citation_precision": 0.8228,
+        "faithfulness_numeric": 0.974,
+        "answer_accuracy": 0.8986,
+        "draft_answer_accuracy": 0.942,
+        "stale_answer_rate": 0.0,
+        "stale_draft_rate": 0.0857,
+        "unsupported_answer_rate": 0.2105,
+        "abstention_rate": 0.2386,
+        "abstention_precision": 0.7143,
+        "abstention_recall": 0.7895,
+        "over_abstention_rate": 0.087,
+        "decision_accuracy": 0.8636,
+        "reliability": 0.875,
+        "reliability_ci95": [
+          0.8068,
+          0.9318
+        ],
+        "latency_ms": {
+          "mean": 2986.5886,
+          "p50": 2431.1,
+          "p95": 5030.5
+        },
+        "reliability_by_category": {
+          "contradiction": 0.6,
+          "historical": 0.9,
+          "multi_doc": 0.8333,
+          "normal": 0.9429,
+          "outdated": 0.8235,
+          "unanswerable": 0.8667
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B4-no-conflicts": {
+      "name": "B4-no-conflicts",
+      "description": "B4 without contradiction detection",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": false,
+      "gating": true,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.9566,
+        "citation_precision": 0.8765,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.971,
+        "draft_answer_accuracy": 0.971,
+        "stale_answer_rate": 0.0571,
+        "stale_draft_rate": 0.0571,
+        "unsupported_answer_rate": 0.2632,
+        "abstention_rate": 0.1591,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.7368,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.9318,
+        "reliability": 0.9205,
+        "reliability_ci95": [
+          0.8636,
+          0.9773
+        ],
+        "latency_ms": {
+          "mean": 2162.1386,
+          "p50": 2088.2,
+          "p95": 2805.5
+        },
+        "reliability_by_category": {
+          "contradiction": 0.2,
+          "historical": 1.0,
+          "multi_doc": 1.0,
+          "normal": 1.0,
+          "outdated": 0.8824,
+          "unanswerable": 0.9333
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    },
+    "B4-no-gating": {
+      "name": "B4-no-gating",
+      "description": "B4 without the verification gate",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": false,
+      "metrics": {
+        "n": 88,
+        "recall_at_5": 1.0,
+        "mrr_at_5": 0.9566,
+        "citation_precision": 0.8675,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.9855,
+        "draft_answer_accuracy": 0.9855,
+        "stale_answer_rate": 0.0286,
+        "stale_draft_rate": 0.0286,
+        "unsupported_answer_rate": 0.4737,
+        "abstention_rate": 0.1136,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.5263,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.8977,
+        "reliability": 0.8864,
+        "reliability_ci95": [
+          0.8182,
+          0.9432
+        ],
+        "latency_ms": {
+          "mean": 2834.9057,
+          "p50": 2303.5,
+          "p95": 4459.5
+        },
+        "reliability_by_category": {
+          "contradiction": 0.2,
+          "historical": 1.0,
+          "multi_doc": 1.0,
+          "normal": 1.0,
+          "outdated": 0.9412,
+          "unanswerable": 0.6667
+        },
+        "counts": {
+          "verified_gold": 69,
+          "abstain_gold": 19,
+          "stale_questions": 35
+        }
+      }
+    }
+  },
+  "conflict_detection": {
+    "gold_pairs": 19,
+    "gold_actionable": 12,
+    "naive_value_difference": {
+      "precision": 0.093,
+      "recall": 0.6667,
+      "f1": 0.1632,
+      "tp": 8,
+      "fp": 78,
+      "fn": 4,
+      "kind_accuracy_on_matched_gold_pairs": 0.2143,
+      "gold_pairs_matched_any_kind": "14/19",
+      "false_positive_examples": [
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "90 days",
+          "b": "ops_handbook.md",
+          "b_value": "35 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "90 days",
+          "b": "security_logging_standard.md",
+          "b_value": "1 year",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "90 days",
+          "b": "build_guide_2022.md",
+          "b_value": "14 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "90 days",
+          "b": "build_guide_2026.md",
+          "b_value": "30 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "30 days",
+          "b": "ops_handbook.md",
+          "b_value": "35 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "30 days",
+          "b": "security_logging_standard.md",
+          "b_value": "180 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "30 days",
+          "b": "security_logging_standard.md",
+          "b_value": "1 year",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "30 days",
+          "b": "build_guide_2022.md",
+          "b_value": "14 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "35 days",
+          "b": "security_logging_standard.md",
+          "b_value": "180 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "35 days",
+          "b": "security_logging_standard.md",
+          "b_value": "1 year",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "35 days",
+          "b": "build_guide_2022.md",
+          "b_value": "14 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "data_retention_policy.md",
+          "a_value": "35 days",
+          "b": "build_guide_2026.md",
+          "b_value": "30 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "ops_handbook.md",
+          "a_value": "35 days",
+          "b": "security_logging_standard.md",
+          "b_value": "180 days",
+          "kind": "contradiction"
+        },
+        {
+          "a": "ops_handbook.md",
+          "a_value": "35 days",
+          "b": "security_logging_standard.md",
+          "b_value": "1 year",
+          "kind": "contradiction"
+        },
+        {
+          "a": "ops_handbook.md",
+          "a_value": "35 days",
+          "b": "build_guide_2022.md",
+          "b_value": "14 days",
+          "kind": "contradiction"
+        }
+      ],
+      "missed": [
+        {
+          "a": "travel_quick_guide.pdf",
+          "a_value": "$180",
+          "b": "travel_policy_2026.md",
+          "b_value": "$200",
+          "kind": "outdated",
+          "topic": "hotel limit"
+        },
+        {
+          "a": "security_awareness_slides.md",
+          "a_value": "48 hours",
+          "b": "incident_response_policy.md",
+          "b_value": "24 hours",
+          "kind": "outdated",
+          "topic": "incident reporting"
+        },
+        {
+          "a": "customer_contract_template.md",
+          "a_value": "1 hour",
+          "b": "support_sla_v2.md",
+          "b_value": "30 minutes",
+          "kind": "outdated",
+          "topic": "P1 response"
+        },
+        {
+          "a": "expense_policy.md",
+          "a_value": "$25",
+          "b": "finance_operations_manual.md",
+          "b_value": "$75",
+          "kind": "contradiction",
+          "topic": "receipt threshold"
+        }
+      ]
+    },
+    "rules_only": {
+      "precision": 0.6667,
+      "recall": 0.5,
+      "f1": 0.5714,
+      "tp": 6,
+      "fp": 3,
+      "fn": 6,
+      "kind_accuracy_on_matched_gold_pairs": 0.8571,
+      "gold_pairs_matched_any_kind": "14/19",
+      "false_positive_examples": [
+        {
+          "a": "it_faq.md",
+          "a_value": "3 years",
+          "b": "procurement_budget_2026.md",
+          "b_value": "4 years",
+          "kind": "outdated",
+          "explanation": "'IT FAQ' ('3 years') is older and has lower standing than 'IT Procurement Budget 2026' ('4 years'). Possibly outdated: confirm and update."
+        },
+        {
+          "a": "finance_operations_manual.md",
+          "a_value": "60 days of the expense date",
+          "b": "travel_policy_2026.md",
+          "b_value": "within 30 days of the end of the trip",
+          "kind": "outdated",
+          "explanation": "'Finance Operations Manual v1.4' ('60 days of the expense date') is older and has lower standing than 'Travel and Expenses Policy v2026' ('within 30 days of the end of the trip'). Possibly outdated: confirm and update."
+        },
+        {
+          "a": "finance_operations_manual.md",
+          "a_value": "60 days of the expense date",
+          "b": "travel_quick_guide.pdf",
+          "b_value": "within 30 days of returning",
+          "kind": "outdated",
+          "explanation": "'Travel Quick Guide' ('within 30 days of returning') is older and has lower standing than 'Finance Operations Manual v1.4' ('60 days of the expense date'). Possibly outdated: confirm and update."
+        }
+      ],
+      "missed": [
+        {
+          "a": "travel_quick_guide.pdf",
+          "a_value": "$180",
+          "b": "travel_policy_2026.md",
+          "b_value": "$200",
+          "kind": "outdated",
+          "topic": "hotel limit"
+        },
+        {
+          "a": "security_awareness_slides.md",
+          "a_value": "48 hours",
+          "b": "incident_response_policy.md",
+          "b_value": "24 hours",
+          "kind": "outdated",
+          "topic": "incident reporting"
+        },
+        {
+          "a": "customer_contract_template.md",
+          "a_value": "1 hour",
+          "b": "support_sla_v2.md",
+          "b_value": "30 minutes",
+          "kind": "outdated",
+          "topic": "P1 response"
+        },
+        {
+          "a": "support_team_wiki.md",
+          "a_value": "2 business days",
+          "b": "support_sla_v2.md",
+          "b_value": "1 business day",
+          "kind": "outdated",
+          "topic": "P3 response"
+        },
+        {
+          "a": "expense_policy.md",
+          "a_value": "$25",
+          "b": "finance_operations_manual.md",
+          "b_value": "$75",
+          "kind": "contradiction",
+          "topic": "receipt threshold"
+        },
+        {
+          "a": "endpoint_security_standard.md",
+          "a_value": "5 minutes",
+          "b": "acceptable_use_policy.md",
+          "b_value": "15 minutes",
+          "kind": "contradiction",
+          "topic": "screen lock timeout"
+        }
+      ]
+    },
+    "rules_plus_llm_judge": {
+      "precision": 0.75,
+      "recall": 0.5,
+      "f1": 0.6,
+      "tp": 6,
+      "fp": 2,
+      "fn": 6,
+      "kind_accuracy_on_matched_gold_pairs": 0.8571,
+      "gold_pairs_matched_any_kind": "14/19",
+      "false_positive_examples": [
+        {
+          "a": "it_faq.md",
+          "a_value": "3 years",
+          "b": "procurement_budget_2026.md",
+          "b_value": "4 years",
+          "kind": "outdated",
+          "explanation": "'IT FAQ' ('3 years') is older and has lower standing than 'IT Procurement Budget 2026' ('4 years'). Possibly outdated: confirm and update."
+        },
+        {
+          "a": "finance_operations_manual.md",
+          "a_value": "60 days of the expense date",
+          "b": "travel_quick_guide.pdf",
+          "b_value": "within 30 days of returning",
+          "kind": "outdated",
+          "explanation": "'Travel Quick Guide' ('within 30 days of returning') is older and has lower standing than 'Finance Operations Manual v1.4' ('60 days of the expense date'). Possibly outdated: confirm and update."
+        }
+      ],
+      "missed": [
+        {
+          "a": "travel_quick_guide.pdf",
+          "a_value": "$180",
+          "b": "travel_policy_2026.md",
+          "b_value": "$200",
+          "kind": "outdated",
+          "topic": "hotel limit"
+        },
+        {
+          "a": "security_awareness_slides.md",
+          "a_value": "48 hours",
+          "b": "incident_response_policy.md",
+          "b_value": "24 hours",
+          "kind": "outdated",
+          "topic": "incident reporting"
+        },
+        {
+          "a": "customer_contract_template.md",
+          "a_value": "1 hour",
+          "b": "support_sla_v2.md",
+          "b_value": "30 minutes",
+          "kind": "outdated",
+          "topic": "P1 response"
+        },
+        {
+          "a": "support_team_wiki.md",
+          "a_value": "2 business days",
+          "b": "support_sla_v2.md",
+          "b_value": "1 business day",
+          "kind": "outdated",
+          "topic": "P3 response"
+        },
+        {
+          "a": "expense_policy.md",
+          "a_value": "$25",
+          "b": "finance_operations_manual.md",
+          "b_value": "$75",
+          "kind": "contradiction",
+          "topic": "receipt threshold"
+        },
+        {
+          "a": "endpoint_security_standard.md",
+          "a_value": "5 minutes",
+          "b": "acceptable_use_policy.md",
+          "b_value": "15 minutes",
+          "kind": "contradiction",
+          "topic": "screen lock timeout"
+        }
+      ]
+    },
+    "detected_kinds": {
+      "complementary": 1,
+      "contradiction": 2,
+      "different_context": 42,
+      "historical": 17,
+      "insufficient_evidence": 1,
+      "outdated": 6,
+      "pending_change": 8
+    }
+  },
+  "comparisons_vs_B4": {
+    "B0": {
+      "reliability_diff": {
+        "diff": 0.0795,
+        "ci95": [
+          -0.0114,
+          0.1705
+        ]
+      },
+      "mcnemar": {
+        "b01": 12,
+        "b10": 5,
+        "p_value": 0.1435
+      }
+    },
+    "B1": {
+      "reliability_diff": {
+        "diff": 0.0795,
+        "ci95": [
+          -0.0114,
+          0.1705
+        ]
+      },
+      "mcnemar": {
+        "b01": 12,
+        "b10": 5,
+        "p_value": 0.1435
+      }
+    },
+    "B2": {
+      "reliability_diff": {
+        "diff": 0.1136,
+        "ci95": [
+          0.0227,
+          0.2159
+        ]
+      },
+      "mcnemar": {
+        "b01": 15,
+        "b10": 5,
+        "p_value": 0.0414
+      }
+    },
+    "B3": {
+      "reliability_diff": {
+        "diff": 0.0,
+        "ci95": [
+          -0.0568,
+          0.0568
+        ]
+      },
+      "mcnemar": {
+        "b01": 4,
+        "b10": 4,
+        "p_value": 1.0
+      }
+    },
+    "B4-no-rerank": {
+      "reliability_diff": {
+        "diff": -0.0114,
+        "ci95": [
+          -0.0682,
+          0.0455
+        ]
+      },
+      "mcnemar": {
+        "b01": 3,
+        "b10": 4,
+        "p_value": 1.0
+      }
+    },
+    "B4-relevance-ranking": {
+      "reliability_diff": {
+        "diff": 0.0,
+        "ci95": [
+          -0.0568,
+          0.0568
+        ]
+      },
+      "mcnemar": {
+        "b01": 3,
+        "b10": 3,
+        "p_value": 1.0
+      }
+    },
+    "B4-newest-wins": {
+      "reliability_diff": {
+        "diff": 0.0341,
+        "ci95": [
+          -0.0227,
+          0.0909
+        ]
+      },
+      "mcnemar": {
+        "b01": 5,
+        "b10": 2,
+        "p_value": 0.4531
+      }
+    },
+    "B4-no-conflicts": {
+      "reliability_diff": {
+        "diff": -0.0114,
+        "ci95": [
+          -0.0682,
+          0.0455
+        ]
+      },
+      "mcnemar": {
+        "b01": 3,
+        "b10": 4,
+        "p_value": 1.0
+      }
+    },
+    "B4-no-gating": {
+      "reliability_diff": {
+        "diff": 0.0227,
+        "ci95": [
+          -0.0227,
+          0.0682
+        ]
+      },
+      "mcnemar": {
+        "b01": 3,
+        "b10": 1,
+        "p_value": 0.625
+      }
+    }
+  }
+}
