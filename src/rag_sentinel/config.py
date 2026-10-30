@@ -78,6 +78,8 @@ class Settings(BaseSettings):
 
     # Streamlit -> API
     api_url: str = "http://127.0.0.1:8000"
+    # Experiment outputs served on the Evaluation page
+    results_dir: Path = Path("results")
 
     @property
     def db_path(self) -> Path:
