@@ -144,3 +144,15 @@ def test_historical_as_of_prefers_version_in_force_then():
     docs = {"v1": v1, "v2": v2}
     assert rank_evidence(hits, docs, lin, AS_OF, RankingWeights())[0].doc_id == "v2"
     assert rank_evidence(hits, docs, lin, date(2026, 3, 1), RankingWeights())[0].doc_id == "v1"
+
+
+def test_judge_failure_is_recorded_for_review_not_dropped():
+    from rag_sentinel.llm import LLMOutputError
+
+    def broken(a, b):
+        raise LLMOutputError("PairVerdict: model output failed validation twice")
+
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "5 days"), claim("b", "y", "3 days")]
+    (only,) = detector(docs, claims, judge=broken).detect()
+    assert only.kind == INSUFFICIENT and only.detected_by == "llm_error"

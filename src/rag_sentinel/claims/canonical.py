@@ -12,16 +12,19 @@ from collections import Counter
 from collections.abc import Callable
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from rag_sentinel.llm import LLM
+from rag_sentinel.llm import LLM, LLMOutputError
+from rag_sentinel.log import get_logger
+
+log = get_logger(__name__)
 
 STRICT_WITHOUT_JUDGE = 0.95
 
 
 class SameAttribute(BaseModel):
     same_attribute: bool
-    reason: str
+    reason: str = Field(max_length=400)
 
 
 JUDGE_SYSTEM = "You compare attribute names extracted from documents. Output JSON only."
@@ -49,9 +52,18 @@ def make_llm_judge(llm: LLM, cache_get=None, cache_set=None) -> Callable[[str, s
         key = f"same-attr-v2:{llm.name}:{min(a, b)}|{max(a, b)}"
         if cache_get and (hit := cache_get(key)) is not None:
             return bool(hit)
-        res = llm.chat_json(
-            JUDGE_SYSTEM, JUDGE_TEMPLATE.format(a=humanize(a), b=humanize(b), qa=qa[:300], qb=qb[:300]), SameAttribute
-        )
+        try:
+            res = llm.chat_json(
+                JUDGE_SYSTEM,
+                JUDGE_TEMPLATE.format(a=humanize(a), b=humanize(b), qa=qa[:300], qb=qb[:300]),
+                SameAttribute,
+            )
+        except LLMOutputError as exc:
+            # not merging is the conservative outcome; not cached, so a later refresh asks again
+            log.warning(
+                "same-attribute judge failed; keys kept separate", extra={"a": a, "b": b, "error": str(exc)[:200]}
+            )
+            return False
         if cache_set:
             cache_set(key, res.same_attribute)
         return res.same_attribute

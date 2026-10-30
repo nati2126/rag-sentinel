@@ -30,13 +30,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from rag_sentinel.claims.normalize import NormalizedValue, values_equivalent
 from rag_sentinel.config import RankingWeights
 from rag_sentinel.db import Claim, Document
 from rag_sentinel.ingest.versioning import Lineage, valid_from
-from rag_sentinel.llm import LLM
+from rag_sentinel.llm import LLM, LLMOutputError
 from rag_sentinel.ranking import standing
 
 CONTRADICTION = "contradiction"
@@ -92,7 +92,7 @@ def context_relation(a: Claim, b: Claim) -> str:
 
 class PairVerdict(BaseModel):
     relation: str  # same_fact_conflict | equivalent | different_context | complementary | unrelated
-    reason: str
+    reason: str = Field(max_length=400)
 
 
 JUDGE_SYSTEM = "You compare factual claims from different documents. Output JSON only."
@@ -219,7 +219,13 @@ class ConflictDetector:
                 return self._make(
                     a, b, INSUFFICIENT, f"Cannot compare reliably ({why}); semantic judge disabled.", "rule"
                 )
-            rel = self.judge(a, b)
+            try:
+                rel = self.judge(a, b)
+            except LLMOutputError as exc:
+                # recorded as a finding for review, never silently dropped or guessed
+                return self._make(
+                    a, b, INSUFFICIENT, f"Semantic judge failed on this pair: {str(exc)[:200]}", "llm_error"
+                )
             detected_by = "llm"
             if rel in ("equivalent", "unrelated"):
                 return None

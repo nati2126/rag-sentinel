@@ -34,14 +34,23 @@ class LLM(Protocol):
 
 
 class OllamaLLM:
-    def __init__(self, base_url: str, model: str, num_ctx: int = 8192, temperature: float = 0.0, timeout: float = 300):
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        num_ctx: int = 8192,
+        temperature: float = 0.0,
+        timeout: float = 300,
+        num_predict: int = 2048,
+    ):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.name = model
-        self.options = {"temperature": temperature, "num_ctx": num_ctx, "seed": 7}
+        # num_predict stops runaway generations (a 7B model occasionally loops on a token)
+        self.options = {"temperature": temperature, "num_ctx": num_ctx, "seed": 7, "num_predict": num_predict}
         self.client = httpx.Client(timeout=timeout)
 
-    def _chat(self, messages: list[dict], schema: dict) -> str:
+    def _chat(self, messages: list[dict], schema: dict, options: dict | None = None) -> str:
         try:
             r = self.client.post(
                 f"{self.base_url}/api/chat",
@@ -50,7 +59,7 @@ class OllamaLLM:
                     "messages": messages,
                     "format": schema,
                     "stream": False,
-                    "options": self.options,
+                    "options": options or self.options,
                 },
             )
             r.raise_for_status()
@@ -59,12 +68,19 @@ class OllamaLLM:
         return r.json()["message"]["content"]
 
     def chat_json(self, system: str, user: str, schema: type[T]) -> T:
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        # The retry is a fresh request with the validation error, another seed and a little temperature: at
+        # temperature 0 the same prompt reproduces the same output, and echoing a degenerate output (a token
+        # loop) back to the model tends to reinforce it.
         json_schema = schema.model_json_schema()
         last_error = ""
         for attempt in range(2):
             t0 = time.perf_counter()
-            raw = self._chat(messages, json_schema)
+            prompt, options = user, self.options
+            if attempt:
+                prompt = f"{user}\n\nA previous answer was invalid ({last_error[:300]}). Return valid JSON only."
+                options = {**self.options, "seed": self.options["seed"] + 1, "temperature": 0.3}
+            messages = [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
+            raw = self._chat(messages, json_schema, options)
             try:
                 result = schema.model_validate_json(raw)
                 log.debug("llm call", extra={"schema": schema.__name__, "ms": round((time.perf_counter() - t0) * 1000)})
@@ -75,13 +91,6 @@ class OllamaLLM:
                     "invalid llm output",
                     extra={"schema": schema.__name__, "attempt": attempt, "error": last_error[:300]},
                 )
-                messages += [
-                    {"role": "assistant", "content": raw},
-                    {
-                        "role": "user",
-                        "content": f"Your JSON was invalid: {last_error[:800]}\nReturn corrected JSON only.",
-                    },
-                ]
         raise LLMOutputError(f"{schema.__name__}: model output failed validation twice: {last_error[:500]}")
 
     def ping(self) -> bool:
