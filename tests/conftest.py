@@ -50,7 +50,7 @@ def settings(tmp_path: Path) -> Settings:
 
 def accept_answer(system: str, user: str) -> dict:
     """Answer-check double that accepts every draft (tests that need a rejection script their own)."""
-    return {"answers_question": True, "supported": True, "missing": ""}
+    return {"asked_for": "", "draft_provides": "", "answers_question": True, "supported": True}
 
 
 @pytest.fixture

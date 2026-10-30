@@ -245,3 +245,13 @@ def test_document_with_several_values_for_one_attribute_is_left_to_the_judge():
     assert by[frozenset({"b", "c"})].kind == DIFFERENT_CONTEXT
     (no_judge,) = {f.kind for f in detector(docs, claims).detect()}
     assert no_judge == INSUFFICIENT
+
+
+def test_is_a_relations_make_subjects_comparable_but_siblings_stay_undecided():
+    def c(subject):
+        return claim("x", "d", "5 minutes", subject=subject)
+
+    assert context_relation(c("laptops and desktops"), c("company device")) == "same"
+    assert context_relation(c("company phones"), c("devices")) == "same"
+    assert context_relation(c("laptops"), c("phones")) == "ambiguous"
+    assert context_relation(c("laptops"), c("production databases")) == "different"

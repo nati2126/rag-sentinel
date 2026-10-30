@@ -62,7 +62,7 @@ class ScriptedLLM:
         self.handlers = handlers
         self.calls: list[tuple[str, str]] = []
 
-    def chat_json(self, system: str, user: str, schema: type[BaseModel]):
+    def chat_json(self, system: str, user: str, schema: type[BaseModel], sample: int = 0):
         self.calls.append((schema.__name__, user))
         handler = self.handlers.get(schema.__name__)
         if handler is None:

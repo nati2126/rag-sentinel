@@ -191,9 +191,10 @@ def test_conflict_only_blocks_answers_that_state_one_of_its_values():
 
 def test_answer_check_rejects_a_draft_that_answers_a_different_question(agent_kb, scripted_llm):
     scripted_llm.handlers["AnswerCheck"] = lambda s, u: {
+        "asked_for": "the name of the officer",
+        "draft_provides": "a description of duties",
         "answers_question": False,
         "supported": True,
-        "missing": "the name of the officer",
     }
     res = SentinelAgent(agent_kb, "B4").ask("How many days of annual leave do full-time employees get?")
     assert res["status"] == INSUFFICIENT and "R9" in res["rules_fired"]
@@ -201,7 +202,12 @@ def test_answer_check_rejects_a_draft_that_answers_a_different_question(agent_kb
 
 
 def test_answer_check_flags_unsupported_statements_for_review(agent_kb, scripted_llm):
-    scripted_llm.handlers["AnswerCheck"] = lambda s, u: {"answers_question": True, "supported": False, "missing": ""}
+    scripted_llm.handlers["AnswerCheck"] = lambda s, u: {
+        "asked_for": "days of leave",
+        "draft_provides": "25 days",
+        "answers_question": True,
+        "supported": False,
+    }
     res = SentinelAgent(agent_kb, "B4").ask("How many days of annual leave do full-time employees get?")
     assert res["status"] == NEEDS_REVIEW and "R10" in res["rules_fired"]
 

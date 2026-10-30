@@ -256,7 +256,8 @@ class SentinelAgent:
             return {"answer_check": None, "trace": [_tr("check_answer", t, "skipped (no valid citation)")]}
         checker = make_answer_checker(self.kb.llm, self.kb.db.cache_get, self.kb.db.cache_set)
         try:
-            res = checker(state["question"], gen["answer"], cited).model_dump()
+            chk = checker(state["question"], gen["answer"], cited)
+            res = chk.model_dump() | {"missing": chk.missing}
         except LLMError as exc:
             # the check failed: record it so verification flags the answer for review instead of trusting it
             res = {"answers_question": True, "supported": False, "missing": "", "error": str(exc)[:200]}

@@ -24,7 +24,7 @@ def table(header: list[str], rows: list[list[str]]) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", default="test")
+    ap.add_argument("--split", default="test_v2", help="split, or split__tag for a tagged run")
     args = ap.parse_args()
     s = json.loads((RESULTS / f"{args.split}_summary.json").read_text(encoding="utf-8"))
     env = s["environment"]
@@ -36,16 +36,26 @@ def main() -> None:
     print("### Answer reliability\n")
     rows = []
     for name, p in P.items():
-        m = p["metrics"]
-        ci = m["reliability_ci95"]
+        m, k = p["metrics"], p["metrics"]["counts"]
+        ci, cc = m["reliability_ci95"], m.get("reliability_ci95_clustered")
         rows.append([
-            name, pct(m["reliability"]) + f" [{pct(ci[0])}, {pct(ci[1])}]" if ci else pct(m["reliability"]),
-            pct(m["answer_accuracy"]), pct(m["stale_answer_rate"]), pct(m["unsupported_answer_rate"]),
-            pct(m["over_abstention_rate"]), pct(m["decision_accuracy"]),
+            name,
+            f"{k['reliable']}/{k['questions']} ({pct(m['reliability'])})",
+            f"[{pct(ci[0])}, {pct(ci[1])}]" if ci else "",
+            f"[{pct(cc[0])}, {pct(cc[1])}]" if cc else "",
+            f"{k['correct_presented']}/{k['verified_gold']}",
+            f"{k['stale_presented']}/{k['stale_questions']}",
+            f"{k['unsupported_presented']}/{k['abstain_gold']}",
+            f"{k['over_abstained']}/{k['verified_gold']}",
+            pct(m["decision_accuracy"]),
             f"{(m['latency_ms']['p50'] or 0) / 1000:.1f} / {(m['latency_ms']['p95'] or 0) / 1000:.1f}",
         ])  # fmt: skip
-    print(table(["Pipeline", "Reliability [95% CI]", "Answer acc.", "Stale rate", "Unsupported rate",
-                 "Over-abstention", "Decision acc.", "Latency p50/p95 s"], rows))  # fmt: skip
+    print(table(["Pipeline", "Reliable", "95% CI (questions)", "95% CI (clustered by group)", "Correct answers",
+                 "Stale answers", "Unsupported answers", "Over-abstained", "Decision acc.", "Latency p50/p95 s"],
+                rows))  # fmt: skip
+    groups = next(iter(P.values()))["metrics"]["counts"]["groups"]
+    print(f"\nClustered intervals resample the {groups} document groups, because questions about the same "
+          "documents are correlated.")  # fmt: skip
 
     print("\n### Retrieval and grounding\n")
     rows = [[n, pct(p["metrics"]["recall_at_5"]), pct(p["metrics"]["mrr_at_5"]), pct(p["metrics"]["citation_precision"]),
@@ -64,11 +74,13 @@ def main() -> None:
         print("\n### Paired comparison with B4 (reliability)\n")
         rows = []
         for n, c in s["comparisons_vs_B4"].items():
-            d = c["reliability_diff"]
+            d, dc = c["reliability_diff"], c.get("reliability_diff_clustered")
             mc = c["mcnemar"]
             rows.append([n, f"{d['diff']:+.1%}" if d else "n/a", f"[{d['ci95'][0]:+.1%}, {d['ci95'][1]:+.1%}]" if d else "",
+                         f"[{dc['ci95'][0]:+.1%}, {dc['ci95'][1]:+.1%}]" if dc else "",
                          f"{mc['b01']} / {mc['b10']}", f"{mc['p_value']:.3g}"])  # fmt: skip
-        print(table(["vs", "B4 minus pipeline", "95% CI (paired bootstrap)", "B4 better / worse", "McNemar p"], rows))
+        print(table(["vs", "B4 minus pipeline", "95% CI (paired)", "95% CI (paired, clustered)", "B4 better / worse",
+                     "McNemar p (assumes independent questions)"], rows))  # fmt: skip
 
     cd = s["conflict_detection"]
     print(

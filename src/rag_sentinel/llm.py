@@ -30,7 +30,7 @@ class LLMOutputError(LLMError):
 class LLM(Protocol):
     name: str
 
-    def chat_json(self, system: str, user: str, schema: type[T]) -> T: ...
+    def chat_json(self, system: str, user: str, schema: type[T], sample: int = 0) -> T: ...
 
 
 class OllamaLLM:
@@ -68,7 +68,8 @@ class OllamaLLM:
             raise LLMError(f"Ollama chat failed ({self.base_url}, model {self.model}): {exc}") from exc
         return r.json()["message"]["content"]
 
-    def chat_json(self, system: str, user: str, schema: type[T]) -> T:
+    def chat_json(self, system: str, user: str, schema: type[T], sample: int = 0) -> T:
+        # sample > 0 draws an independent sample (temperature 0.3, seed + 100 * sample) for self-consistency checks.
         # The retry is a fresh request with the validation error, another seed and a little temperature: at
         # temperature 0 the same prompt reproduces the same output, and echoing a degenerate output (a token
         # loop) back to the model tends to reinforce it.
@@ -77,9 +78,11 @@ class OllamaLLM:
         for attempt in range(2):
             t0 = time.perf_counter()
             prompt, options = user, self.options
+            if sample:
+                options = {**self.options, "seed": self.options["seed"] + 100 * sample, "temperature": 0.3}
             if attempt:
                 prompt = f"{user}\n\nA previous answer was invalid ({last_error[:300]}). Return valid JSON only."
-                options = {**self.options, "seed": self.options["seed"] + 1, "temperature": 0.3}
+                options = {**options, "seed": options["seed"] + 1, "temperature": 0.3}
             messages = [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
             raw = self._chat(messages, json_schema, options)
             try:

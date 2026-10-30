@@ -62,6 +62,9 @@ _SYNONYMS = {
     "passwords": "password", "accounts": "account", "users": "user", "laptops": "laptop", "devices": "device",
     "fulltime": "full-time", "parttime": "part-time",
 }  # fmt: skip
+# one-directional "is a" relations: a laptop is a device, but a laptop and a phone are not the same subject
+_HYPERNYMS = {"laptop": "device", "desktop": "device", "phone": "device", "smartphone": "device", "tablet": "device",
+              "mobile": "device", "computer": "device", "workstation": "device"}  # fmt: skip
 _CTX_STOP = {"all", "the", "a", "an", "of", "for", "each", "every", "any", "our", "company", "regular", "standard",
              "general", "eligible", "new", "and", "or", "to", "in", "on", "with", "is", "are", "be"}  # fmt: skip
 
@@ -87,9 +90,12 @@ def context_relation(a: Claim, b: Claim) -> str:
     """'same' | 'different' | 'ambiguous'."""
     sa, sb = context_tokens(a.subject), context_tokens(b.subject)
     qa, qb = context_tokens(a.qualifier), context_tokens(b.qualifier)
-    if sa and sb and not (sa & sb):
+    ea = sa | {_HYPERNYMS[t] for t in sa if t in _HYPERNYMS}
+    eb = sb | {_HYPERNYMS[t] for t in sb if t in _HYPERNYMS}
+    if sa and sb and not (ea & eb):
         return "different"
-    subject_same = sa == sb or sa <= sb or sb <= sa
+    # one subject contains the other, counting "is a" relations ("laptops and desktops" within "company device")
+    subject_same = sa == sb or sa <= eb or sb <= ea
     if qa != qb:
         return "ambiguous"
     return "same" if subject_same else "ambiguous"

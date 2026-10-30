@@ -7,7 +7,8 @@ question, the draft and the cited passages. Its verdict feeds two verification r
   R9  the draft does not provide what the question asks for   -> INSUFFICIENT_EVIDENCE
   R10 the draft states something the cited passages do not    -> NEEDS_REVIEW
 
-Results are cached by model, prompt version, question, answer and cited text.
+A negative verdict counts only when an independent second sample agrees. Results are cached by model,
+prompt version, question, answer and cited text.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from rag_sentinel.llm import LLM
 
-PROMPT_VERSION = "answer-check-v1"
+PROMPT_VERSION = "answer-check-v3"
 
 SYSTEM = "You check answers produced by a document question-answering system. Output JSON only."
 
@@ -30,25 +31,28 @@ Draft answer: {answer}
 Cited evidence:
 {evidence}
 
-Decide two things.
+Fill the fields in order.
 
-1. answers_question: does the draft answer give the specific information the question asks for?
-   It is false when the draft talks about a related topic but does not provide what was asked, for example:
-   - the question asks WHO holds a role, and the draft only says what the role does;
-   - the question asks about one kind of item (e.g. sick leave) and the draft gives another (e.g. annual leave);
-   - the question asks WHETHER something is allowed or WHEN something happens, and the draft gives a
-     different rule that does not settle it.
-   A short or partial answer that does provide the asked information counts as true.
-
-2. supported: is every factual statement in the draft stated in the cited evidence (paraphrase is fine)?
-
-In `missing`, say briefly what the question asks for that the draft does not provide (empty if nothing)."""
+1. asked_for: in a few words, the information the question requests and the specific thing it is about.
+2. draft_provides: in a few words, what the draft states about that specific thing, or "nothing".
+3. answers_question: true if the draft states the requested information about that specific thing. The
+   draft does not need to repeat the question's wording, dates or conditions, and an answer such as
+   "only when X happens" or "no" counts as an answer.
+   False when the draft gives a different kind of information (a description instead of a name, a general
+   rule instead of a requested product), is about a different item than the one asked about, or answers a
+   question about one specific situation with a general rule that never mentions that situation.
+4. supported: true if every fact in the draft appears in the cited evidence (paraphrase is fine)."""
 
 
 class AnswerCheck(BaseModel):
+    asked_for: str = Field(max_length=200)  # required: forces the reasoning to come before the verdict
+    draft_provides: str = Field(max_length=300)
     answers_question: bool
     supported: bool
-    missing: str = Field(default="", max_length=400)
+
+    @property
+    def missing(self) -> str:
+        return "" if self.answers_question else f"{self.asked_for} (the draft gives {self.draft_provides})"
 
 
 def make_answer_checker(llm: LLM, cache_get=None, cache_set=None) -> Callable[[str, str, list[dict]], AnswerCheck]:
@@ -60,7 +64,17 @@ def make_answer_checker(llm: LLM, cache_get=None, cache_set=None) -> Callable[[s
         )
         if cache_get and (hit := cache_get(key)) is not None:
             return AnswerCheck.model_validate(hit)
-        res = llm.chat_json(SYSTEM, TEMPLATE.format(question=question, answer=answer, evidence=evidence), AnswerCheck)
+        prompt = TEMPLATE.format(question=question, answer=answer, evidence=evidence)
+        res = llm.chat_json(SYSTEM, prompt, AnswerCheck)
+        if not (res.answers_question and res.supported):
+            # a negative verdict must be confirmed by an independent sample; one 'no' from a 7B model is noisy
+            second = llm.chat_json(SYSTEM, prompt, AnswerCheck, sample=1)
+            res = AnswerCheck(
+                asked_for=res.asked_for or second.asked_for,
+                draft_provides=res.draft_provides or second.draft_provides,
+                answers_question=res.answers_question or second.answers_question,
+                supported=res.supported or second.supported,
+            )
         if cache_set:
             cache_set(key, res.model_dump())
         return res
