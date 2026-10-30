@@ -14,5 +14,8 @@
   {"a": "it_asset_standard_2023.docx", "a_value": "3 years", "b": "hardware_lifecycle_policy_2026.pdf", "b_value": "4 years", "kind": "historical", "topic": "laptop replacement"},
   {"a": "tls_standard_2019.md", "a_value": "TLS 1.0", "b": "cryptography_standard_2026.md", "b_value": "TLS 1.2", "kind": "historical", "topic": "minimum TLS"},
   {"a": "remote_work_policy_v1.md", "a_value": "2 days", "b": "remote_work_policy_v2_draft.md", "b_value": "4 days", "kind": "pending_change", "topic": "remote days"},
-  {"a": "travel_policy_2026.md", "a_value": "$60", "b": "travel_policy_2027.md", "b_value": "$70", "kind": "pending_change", "topic": "meal per diem"}
+  {"a": "travel_policy_2026.md", "a_value": "$60", "b": "travel_policy_2027.md", "b_value": "$70", "kind": "pending_change", "topic": "meal per diem"},
+  {"a": "expense_policy.md", "a_value": "$25", "b": "finance_operations_manual.md", "b_value": "$75", "kind": "contradiction", "topic": "receipt threshold"},
+  {"a": "expense_policy.md", "a_value": "30 days", "b": "finance_operations_manual.md", "b_value": "60 days", "kind": "contradiction", "topic": "claim submission deadline"},
+  {"a": "endpoint_security_standard.md", "a_value": "5 minutes", "b": "acceptable_use_policy.md", "b_value": "15 minutes", "kind": "contradiction", "topic": "screen lock timeout"}
 ]
