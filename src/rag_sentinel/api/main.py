@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from sqlmodel import col, select
 
@@ -67,7 +68,7 @@ def create_app(kb: KnowledgeBase | None = None) -> FastAPI:
         yield
         app.state.kb.vectors.close()
 
-    app = FastAPI(title="RAG Sentinel API", version="0.1.0", description=pkg_doc, lifespan=lifespan)
+    app = FastAPI(title="RAG Sentinel API", version="0.2.0", description=pkg_doc, lifespan=lifespan)
 
     def get_kb(request: Request) -> KnowledgeBase:
         return request.app.state.kb
@@ -84,6 +85,10 @@ def create_app(kb: KnowledgeBase | None = None) -> FastAPI:
         return HTTPException(404, f"Not found: {exc.args[0]}")
 
     # ----------------------------------------------------------------- health
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:
+        return RedirectResponse("/docs")
+
     @app.get("/health", tags=["system"])
     def health(k: KnowledgeBase = Depends(get_kb)) -> dict[str, Any]:
         llm_ok = bool(k.llm and hasattr(k.llm, "ping") and k.llm.ping())
