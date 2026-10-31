@@ -26,7 +26,7 @@ Ask page, pipeline **B0**: "How many days of annual leave do full-time employees
 Switch to **B4**:
 * answer 25 days, VERIFIED, citation to v2 in force;
 * warnings about the superseded v1 and the outdated onboarding guide;
-* the decision trace (analyze, retrieve, claims, conflicts, rank, generate, verify).
+* the decision trace (analyze, retrieve, claims, conflicts, rank, generate, check, verify).
 
 Historical: "How many days did full-time employees get in March 2026?" gives 20, VERIFIED, from v1.
 

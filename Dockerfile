@@ -1,5 +1,5 @@
 # RAG Sentinel API + UI image (CPU). Ollama runs in its own container (see docker-compose.yml).
-# NOTE: not built or tested on the development machine (Docker Desktop's disk is on a full C: drive).
+# NOTE: not built or tested yet; the native Windows setup in README.md is the verified path.
 FROM python:3.11-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /usr/local/bin/uv

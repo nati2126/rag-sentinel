@@ -74,20 +74,26 @@ for name, p in S["pipelines"].items():
 df = pd.DataFrame(rows)
 
 BLUE = "#2a78d6"
+MUTED = "#7d8590"  # readable on both the light and the dark theme
 
 
 def bar(metric_label: str, higher_better: bool, help_text: str) -> alt.Chart:
     d = df[["Pipeline", metric_label]].dropna()
     base = alt.Chart(d).encode(
-        y=alt.Y("Pipeline:N", sort=list(df["Pipeline"]), title=None),
+        y=alt.Y("Pipeline:N", sort=list(df["Pipeline"]), title=None, axis=alt.Axis(labelOverlap=False, labelLimit=160)),
         x=alt.X(f"{metric_label}:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format="%", grid=True), title=None),
         tooltip=["Pipeline", alt.Tooltip(f"{metric_label}:Q", format=".1%")],
     )
-    bars = base.mark_bar(color=BLUE, cornerRadiusEnd=4, height=14)
-    labels = base.mark_text(align="left", dx=4, fontSize=11).encode(text=alt.Text(f"{metric_label}:Q", format=".0%"))
+    # B4 (the full system) is the accent; baselines and ablations are muted for comparison
+    bars = base.mark_bar(cornerRadiusEnd=4, height=14).encode(
+        color=alt.condition(alt.datum.Pipeline == "B4", alt.value(BLUE), alt.value(MUTED))
+    )
+    labels = base.mark_text(align="left", dx=4, fontSize=11, color=MUTED).encode(
+        text=alt.Text(f"{metric_label}:Q", format=".0%")
+    )
     arrow = "higher is better" if higher_better else "lower is better"
     return (bars + labels).properties(
-        title=alt.TitleParams(metric_label, subtitle=f"{help_text} ({arrow})"), height=40 + 22 * len(d)
+        title=alt.TitleParams(metric_label, subtitle=f"{help_text} ({arrow})"), height=40 + 24 * len(d)
     )
 
 

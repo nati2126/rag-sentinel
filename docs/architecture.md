@@ -44,7 +44,8 @@ flowchart TD
     DC --> RK[rank_evidence<br/>relevance x authority x approval x recency,<br/>superseded / draft / future penalties]
     RK -->|evidence| G[generate_answer<br/>only labelled evidence, must cite]
     RK -->|no evidence| F
-    G --> VE[verify_evidence<br/>rules R1-R8]
+    G --> CA[check_answer<br/>does the draft answer the question,<br/>is it supported by the cited evidence]
+    CA --> VE[verify_evidence<br/>rules R1-R10]
     VE --> F[final_decision<br/>VERIFIED / NEEDS_REVIEW / INSUFFICIENT_EVIDENCE]
 ```
 
@@ -62,6 +63,8 @@ Every node writes a trace entry (node, duration, detail), returned with the answ
 | R6 | every cited source is superseded, draft or not yet effective | NEEDS_REVIEW |
 | R7 | an unresolved contradiction exists for a fact the answer relies on | NEEDS_REVIEW |
 | R8 | the answer cites an outdated source but not the preferred one | NEEDS_REVIEW |
+| R9 | the answer check finds the draft does not provide what the question asks for (two samples must agree) | INSUFFICIENT_EVIDENCE |
+| R10 | the answer check finds statements not in the cited evidence, or the check itself failed | NEEDS_REVIEW |
 
 ## Conflict kinds
 
