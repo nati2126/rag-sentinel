@@ -40,6 +40,11 @@ The goal was to make the v0.1 claims defensible, not to add features.
 * Judge failures on a pair are recorded as `insufficient_evidence` (`llm_error`) instead of aborting the analysis.
 * Additive SQLite migration for new nullable columns.
 
+### Results
+Held-out `test_v2` (81 questions, single run): B4 74/81 (91.4%) vs B0 66/81 and B3 68/81. Stale 0/21, unsupported
+4/23. Three sampled runs give B4 73–74/81. Details, failure analysis and limitations are in
+`docs/evaluation_report.md`.
+
 ## v0.1
 First complete version: ingestion, versioning, hybrid retrieval, claims, conflict detection, LangGraph agent,
 FastAPI, Streamlit, and the VersionConflict benchmark. Results in `results/v0.1/` and

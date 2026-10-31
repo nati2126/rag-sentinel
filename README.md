@@ -12,29 +12,32 @@ Otherwise it says **NEEDS_REVIEW** (with the conflicting sources) or **INSUFFICI
 Everything runs locally at zero cost: Ollama (`qwen2.5:7b-instruct`, `nomic-embed-text`) and the
 `BAAI/bge-reranker-base` cross-encoder.
 
-## Results (held-out test split, 88 questions)
+## Results (v0.2, held-out `test_v2`, 81 questions, run once)
 
-| Pipeline | Reliability [95% CI] | Stale answer rate | Unsupported answer rate | Latency p50 |
-|---|---|---|---|---|
-| B0 vector RAG | 83.0% [75.0, 90.9] | 22.9% | 36.8% | 1.2 s |
-| B2 hybrid + rerank | 79.5% [70.5, 87.5] | 28.6% | 42.1% | 2.0 s |
-| B3 + temporal / authority ranking | 90.9% [85.2, 96.6] | 5.7% | 31.6% | 2.1 s |
-| **B4 RAG Sentinel** | **90.9%** [85.2, 96.6] | **0.0%** | 31.6% | 2.3 s |
+| Pipeline | Reliable | 95% CI, clustered by document group | Stale presented | Unsupported presented | Latency p50 |
+|---|---|---|---|---|---|
+| B0 vector RAG | 66/81 (81.5%) | [77.5, 84.8] | 5/21 | 8/23 | 1.2 s |
+| B2 hybrid + rerank | 63/81 (77.8%) | [72.1, 83.7] | 6/21 | 11/23 | 2.3 s |
+| B3 + temporal / authority ranking | 68/81 (84.0%) | [77.8, 90.2] | 1/21 | 11/23 | 2.4 s |
+| **B4 RAG Sentinel** | **74/81 (91.4%)** | [86.2, 96.2] | **0/21** | **4/23** | 3.5 s |
 
 What the numbers support:
-* Version and authority-aware ranking removes stale answers (22.9% down to 0%).
-* B4 vs B0 is +8.0 points, but that is **not significant** (McNemar p = 0.14). B4 vs B2 is +11.4 points
-  (p = 0.04).
-* Conflict detection and gating did **not** improve overall reliability over B3 on this test set. They
-  help on contradiction questions (20% to 60%, n = 5) and remove the last stale answers, but also cause
-  false reviews.
-* B4 still presents an answer on 31.6% of the questions it should refuse. The relevance gate tuned on dev
-  came out at 0, i.e. off.
-* Corpus-level contradiction detection: precision 75% at 50% recall, against 9% precision for naive
-  "values differ" detection.
+* B4 vs B0: +9.9 points (10 questions better, 2 worse), clustered paired CI [+4.6, +15.7]. A real but
+  modest gain on this benchmark.
+* B4 vs B3: +7.4 points (8 / 2). This is borderline: the question-level CI touches 0 (McNemar p = 0.11). Ranking by
+  version and authority already removes most stale answers. B4 adds abstention (unsupported 11/23 → 4/23)
+  and contradiction handling (0/5 → 4/5).
+* B4 still presents an answer on 4 of 23 questions it should refuse, mostly "related fact" answers to
+  unanswerable questions.
+* Conflict detection (rules plus LLM judge): 8 of 12 actionable gold conflicts found, 0 false positives.
+* The answer check, conflict detection and reranker each change only 1–3 questions on this split. They
+  are not individually significant.
+* Repeated runs with sampling (3 seeds) are in the report.
 
-Full tables, ablations, per-question failure analysis and limitations are in
-[docs/evaluation_report.md](docs/evaluation_report.md).
+The evaluation protocol, ablations, failure analysis and limitations are in
+[docs/evaluation_report.md](docs/evaluation_report.md). See `CHANGELOG.md` for the v0.2 changes. v0.1 results
+(a different split, since retired to development data) are in
+[docs/evaluation_report_v0.1.md](docs/evaluation_report_v0.1.md).
 
 ## Features
 
@@ -146,10 +149,11 @@ docs/               architecture, evaluation report, demo script
 
 ## Limitations
 
-* The LLM conflict judge can overrule correct rule decisions (known regression, see the evaluation report).
+* The answer check (same 7B model) misses some answers that state a related fact instead of what was asked,
+  and accepts partial answers to multi-part questions.
 * Claim extraction with a 7B model misses facts and sometimes mislabels scope (for example the approver in
   "purchases above $500 need director approval"). Detection quality depends on it.
 * Embedded Qdrant is single-process; use Qdrant server for concurrent writers.
-* The benchmark is small (26 dev + 88 test questions) and mostly synthetic. Treat differences of a few points
-  as noise; the confidence intervals in the report say how much.
+* The benchmark is small (114 development + 81 held-out questions), synthetic, and written by the system's
+  author. Treat differences of a few questions as noise; the clustered confidence intervals say how much.
 * Answers are English only, and scanned PDFs (no text layer) are not supported.
