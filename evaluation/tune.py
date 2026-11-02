@@ -3,7 +3,7 @@
 Uses B4 records produced with min_relevance=0: raising the threshold only turns answers whose best evidence
 relevance is below it into abstentions, so every candidate can be scored without re-running the LLM.
 Candidates are midpoints between observed relevances. The threshold with the highest pooled reliability
-wins; ties go to the lowest threshold (fewest refusals). The held-out split (test_v2) is never read.
+wins; ties go to the lowest threshold (fewest refusals). The held-out splits (test_v2, public_v1) are never read.
 
     python -m evaluation.run --split dev --min-relevance 0 --force
     python -m evaluation.run --split test_v1 --min-relevance 0 --force
@@ -15,7 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from evaluation.run import RESULTS, success
+from evaluation.run import HELD_OUT, RESULTS, success
 
 
 def simulate(records: list[dict], threshold: float) -> list[dict]:
@@ -34,8 +34,8 @@ def main() -> None:
     args = ap.parse_args()
 
     splits = [x for x in args.splits.split(",") if x]
-    if "test_v2" in splits:
-        raise SystemExit("test_v2 is the held-out split; it must not be used for tuning")
+    if held := HELD_OUT.intersection(splits):
+        raise SystemExit(f"{', '.join(sorted(held))}: held-out split(s); they must not be used for tuning")
     records: list[dict] = []
     for split in splits:
         summary = json.loads((RESULTS / f"{split}_summary.json").read_text(encoding="utf-8"))

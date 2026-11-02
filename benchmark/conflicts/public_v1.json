@@ -1,0 +1,12 @@
+[
+  {"a": "irs_news_ir_2025_128.md", "a_value": "72.5 cents", "b": "irs_announcement_2026_11.md", "b_value": "76 cents", "kind": "outdated", "topic": "business standard mileage rate"},
+  {"a": "irs_news_ir_2025_128.md", "a_value": "20.5 cents", "b": "irs_announcement_2026_11.md", "b_value": "23.5 cents", "kind": "outdated", "topic": "medical standard mileage rate"},
+  {"a": "irs_notice_2026_10.pdf", "a_value": "72.5 cents", "b": "irs_announcement_2026_11.md", "b_value": "76 cents", "kind": "historical", "topic": "business standard mileage rate (modified from July 1, 2026)"},
+  {"a": "irs_notice_2024_08.pdf", "a_value": "67 cents", "b": "irs_notice_2025_05.pdf", "b_value": "70 cents", "kind": "historical", "topic": "business standard mileage rate"},
+  {"a": "irs_notice_2025_05.pdf", "a_value": "70 cents", "b": "irs_notice_2026_10.pdf", "b_value": "72.5 cents", "kind": "historical", "topic": "business standard mileage rate"},
+  {"a": "irs_notice_2023_75.pdf", "a_value": "$23,000", "b": "irs_notice_2024_80.pdf", "b_value": "$23,500", "kind": "historical", "topic": "401(k) elective deferral limit"},
+  {"a": "irs_notice_2024_80.pdf", "a_value": "$23,500", "b": "irs_notice_2025_67.pdf", "b_value": "$24,500", "kind": "historical", "topic": "401(k) elective deferral limit"},
+  {"a": "hmrc_rates_and_thresholds_2024_to_2025.md", "a_value": "£116.75", "b": "hmrc_rates_and_thresholds_2025_to_2026.md", "b_value": "£118.75", "kind": "historical", "topic": "Statutory Sick Pay weekly rate"},
+  {"a": "hmrc_rates_and_thresholds_2025_to_2026.md", "a_value": "£118.75", "b": "hmrc_rates_and_thresholds_2026_to_2027.md", "b_value": "£123.25", "kind": "historical", "topic": "Statutory Sick Pay weekly rate"},
+  {"a": "hmrc_rates_and_thresholds_2024_to_2025.md", "a_value": "13.8%", "b": "hmrc_rates_and_thresholds_2025_to_2026.md", "b_value": "15%", "kind": "historical", "topic": "employer Class 1 National Insurance rate"}
+]

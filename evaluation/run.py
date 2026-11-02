@@ -42,7 +42,8 @@ def load_questions(split: str) -> list[dict]:
         return [json.loads(line) for line in fh if line.strip()]
 
 
-SPLITS = ["dev", "test_v1", "test_v2"]
+SPLITS = ["dev", "test_v1", "test_v2", "public_v1"]
+HELD_OUT = {"test_v2", "public_v1"}  # never used for tuning
 
 
 def bench_settings(split: str, min_relevance: float | None, temperature: float | None = None,
