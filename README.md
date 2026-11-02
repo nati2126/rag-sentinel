@@ -2,7 +2,7 @@
 
 **A RAG system that knows when its documents disagree, and says so instead of guessing.**
 
-![Ask page: a verified answer with its citation](docs/img/ask.png)
+![Demo: plain RAG gives the outdated answer, RAG Sentinel gives the verified one](docs/img/demo.gif)
 
 ## The problem
 
@@ -39,11 +39,11 @@ Full method, ablations and failure analysis are in the [evaluation report](docs/
 
 ## Screenshots
 
-| Conflict Center | Evaluation |
+| Ask | Conflict Center |
 |---|---|
-| ![Conflict Center](docs/img/conflicts.png) | ![Evaluation](docs/img/evaluation.png) |
-
-![Overview](docs/img/overview.png)
+| ![Ask](docs/img/ask.png) | ![Conflict Center](docs/img/conflicts.png) |
+| **Evaluation** | **Overview** |
+| ![Evaluation](docs/img/evaluation.png) | ![Overview](docs/img/overview.png) |
 
 ## Quick start (Windows)
 
