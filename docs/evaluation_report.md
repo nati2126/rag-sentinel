@@ -1,7 +1,8 @@
 # Evaluation report v0.2: VersionConflict benchmark
 
 v0.2 is a reliability-hardening release (see `CHANGELOG.md`). This report covers the **held-out `test_v2`
-split, run once**, plus the development results that informed v0.2. The v0.1 report is kept unchanged in
+split, run once**, a second held-out split of **real, unedited IRS and UK government documents (`public_v1`),
+also run once**, and the development results that informed v0.2. The v0.1 report is kept unchanged in
 `docs/evaluation_report_v0.1.md`.
 
 All tables were rendered by `python -m evaluation.report` and `python -m evaluation.variance` from
@@ -14,9 +15,10 @@ All tables were rendered by `python -m evaluation.report` and `python -m evaluat
 |---|---|---|---|---|
 | `dev` | development | 26 | 14 / 3 | used since v0.1 |
 | `test_v1` | development | 88 | 44 / 13 | the v0.1 test split. Its failures were analysed after v0.1, so it is no longer held out. T10 relabelled (see CHANGELOG) |
-| `test_v2` | **held out** | 81 | 40 / 12 (+2 leakage-check questions) | written and committed (`ccdaadb`) before any v0.2 code change, run once after development stopped |
+| `test_v2` | **held out** | 81 | 40 / 12 (+2 leakage-check questions) | written and committed (tag `test-v2-split`) before any v0.2 code change, run once after development stopped |
+| `public_v1` | **held out** | 44 | 14 / 4 | real IRS and GOV.UK documents, unedited. Questions committed (tag `public-v1-split`) before its single run, with the same frozen code |
 
-* **Freeze.** Code, prompts and the tuned threshold were committed before the `test_v2` run. No change was
+* **Freeze.** Code, prompts and the tuned threshold were committed (tag `v0.2-freeze`) before the `test_v2` run. No change was
   made after it.
 * **What was tuned, and on what.** The answer-check prompt (3 iterations), the arbitration rules and the
   relevance gate were all developed and tuned on `dev` + `test_v1` only. `evaluation/tune.py` refuses `test_v2`.
@@ -201,6 +203,83 @@ Five failures presented a wrong answer as VERIFIED. Two were over-cautious refus
 
 The v0.2 code was frozen before this run, so none of these were fixed. They are the starting list for v0.3.
 
+## Real documents (public_v1, held out, single run)
+
+`test_v2` is synthetic and self-authored. `public_v1` checks whether the results carry over to real documents.
+
+**Corpus.** It has 14 unedited documents in 4 groups:
+* IRS standard mileage rates for 2024–2026: three notices, the mid-2026 revision Announcement 2026-11, a news
+  release and the rates page.
+* IRS 2024–2026 retirement plan limits: three notices and a news release.
+* HMRC employer rates and thresholds pages for three tax years.
+* The GOV.UK National Minimum Wage page.
+
+PDFs are the originals. HTML pages were converted to Markdown with the text unchanged. Sources and licences are
+in `benchmark/README.md`. The documents are long and full of tables: 247 chunks, against 41 for the 40
+documents of `test_v2`.
+
+**Questions.** There are 44 questions: outdated 14, normal 12, historical 8, unanswerable 8 and multi-document 2.
+The same author wrote them, so they are not independent, but the documents and their inconsistencies are real.
+The split was committed before the run. Decision code was the frozen v0.2 code, and nothing was tuned.
+
+| Pipeline | Reliable | Stale presented | Unsupported presented | Over-abstained | Wrong answers presented |
+|---|---|---|---|---|---|
+| B0 vector RAG | 33/44 (75.0%) | 3/25 | 0/8 | 3/36 | 8 |
+| B3 + temporal / authority ranking | **40/44 (90.9%)** | 0/25 | 2/8 | 1/36 | 3 |
+| B4 RAG Sentinel | 37/44 (84.1%) | **0/25** | **0/8** | 7/36 | **0** |
+| B4 without gating rules | 40/44 (90.9%) | 0/25 | 1/8 | 0/36 | 4 |
+
+*Wrong answers presented* counts answers shown as reliable that were stale, incorrect or should have been
+refused (B0 and B3 present every answer they do not abstain on).
+
+What this shows:
+
+* **B4 did not beat B3 on real documents.**
+  * B4 is −6.8 points against B3 (2 questions better, 5 worse), with clustered CI [−17.0, 0.0].
+  * Against B0 it is +9.1 points, with clustered CI [0.0, +17.9] and McNemar p = 0.29. That is not
+    significant on 44 questions.
+  * The test_v2 headline (+9.9 over B0) is therefore **not confirmed** on this split.
+* **B4 presented no wrong answer.**
+  * All 7 of its failures were refusals or review flags.
+  * B3 presented 3 wrong answers: 2 to unanswerable questions, and one IRA limit given as the 401(k) value.
+  * B4's trade is fewer answers, every one correct. Whether that is better depends on the cost of a wrong
+    answer. Reliability as defined here scores the two failure types the same.
+* **Stale answers: 0/25 for B3 and every B4 variant,** against 3/25 for B0 and 4/25 for B1. Version and
+  authority ranking does this work. It is the one result that holds on both held-out splits.
+* **Conflict detection did not work on these documents.**
+  * It found 0 of 2 actionable gold pairs and made 7 false positives.
+  * The judge rated the 72.5¢ news release vs the 76¢ announcement as `different_context`. That is defensible,
+    because the announcement applies from July 1, but it is not the `outdated` link the gold expects.
+  * The false positives come from extraction (see below). A naive "values differ" detector would flag 2,744
+    pairs.
+* **Ingestion does not scale yet.** The 14 documents took 2 h 25 min (8,717 s), against 4 min for `test_v2`.
+  * Extraction produced 830 claims and the grounding check rejected 185.
+  * Documents that state many values per attribute send thousands of cross-document pairs to the LLM judge.
+  * 3,214 of the pairs were finally rated `different_context`.
+* **Limits of the split.**
+  * It has no contradiction questions: the real documents contain no equal-authority contradictions.
+  * It has only 2 actionable gold conflict pairs, so the detection numbers are anecdotes, not rates.
+
+### Failure analysis (B4 on public_v1, 7 of 44)
+
+| Question | What happened |
+|---|---|
+| P01, P11 | **Extraction dropped an enumerated scope.** Notice 2026-10 says "The standard mileage rate for 2026 is 20.5 cents per mile for use of an automobile: (1) for medical care…". The extractor stored 20.5¢ as the generic standard mileage rate. The judge then linked it to the 72.5¢ business rate as a conflict. In P11 that false conflict blocked a correct answer (R8). In P01 the draft itself gave 20.5¢ as the business rate, and R10/R8 blocked it. |
+| P04, P17 | **Correct draft without citation markers.** The 7B generator answered correctly but cited nothing, so R4 refused. B3 has no citation rule and presented the same answers. |
+| P05 | **Answer-check false alarm.** The correct 72.5¢ answer for March 2026 was flagged as not in the evidence (R10). |
+| P23 | **Wrong draft, correctly blocked.** It gave the 401(k) catch-up ($8,000) for the IRA catch-up ($1,100). R10 stopped it. This counts as a failure only because the gold answer is VERIFIED. |
+| P37 | **Historical comparison handled as a current question.** The question compares two past tax years. The query was run in current mode, retrieval returned only the 2025–26 page, which is superseded at the reference date, and R2 refused. The 2024–25 page was never retrieved. |
+
+These are additions to the v0.3 list:
+* extract scope from enumerated legal sentences;
+* reduce pair-judge volume, for example by comparing only claims with matching qualifiers and periods;
+* repair missing citations instead of refusing;
+* detect comparisons between past periods as historical questions.
+
+None were fixed before this report, and the split is now spent.
+
+Tables: `results/public_v1_tables.md`. Records: `results/public_v1_records.jsonl`.
+
 ## Development results (not held out)
 
 | Split | B0 | B3 | B4 | B4 unsupported | Notes |
@@ -217,8 +296,10 @@ Tables: `results/dev_tables.md`, `results/test_v1_tables.md`.
 * **Not independent.** The author of `test_v2` also built the system and knew the v0.1 failure modes. The
   split was written before v0.2 development and follows the same guideline, but an independent annotator would
   likely find other failure modes.
-* **Synthetic documents.** Clean Markdown plus one generated PDF and one DOCX. Real policy corpora are messier
-  (tables, scanned pages, long documents), and extraction quality would drop.
+* **Synthetic documents in test_v2.** Clean Markdown plus one generated PDF and one DOCX. On the real documents
+  in `public_v1`, extraction quality did drop: scope was lost from enumerated sentences, conflict detection
+  failed, and ingestion was about 40 times slower per document. B4's lead over B3 disappeared there. No
+  scanned pages were tested.
 * **Same 7B model for everything.** Generation, claim extraction, conflict judge and answer check all use
   `qwen2.5:7b-instruct`. Their errors are correlated, which is why the answer check misses some
   related-fact answers.

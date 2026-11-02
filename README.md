@@ -35,6 +35,18 @@ unanswerable questions.
 * It is not perfect. It still answers 4 questions it should refuse, and it misses 4 of 12 known conflicts.
 * Three repeat runs with different random seeds give the same picture (B4 73–74 / 81).
 
+A second held-out split of 44 questions over 14 real IRS and UK government documents gives a more mixed picture:
+
+| | Plain RAG (B0) | Version-aware ranking (B3) | RAG Sentinel (B4) |
+|---|---|---|---|
+| Reliable answers | 33 / 44 | **40 / 44** | 37 / 44 |
+| Stale answers given | 3 / 25 | **0 / 25** | **0 / 25** |
+| Wrong answers presented | 8 | 3 | **0** |
+
+* On real documents, B4 never presented a wrong answer, but it refused or flagged 7 answers that were correct.
+* Conflict detection found none of the 2 real conflicts.
+* Analysing 14 long, table-heavy documents took 2.4 hours.
+
 Full method, ablations and failure analysis are in the [evaluation report](docs/evaluation_report.md).
 
 ## Screenshots
@@ -79,7 +91,9 @@ Then upload the sample HR documents from `benchmark/corpus/dev/hr_leave/` on the
 
 * Uses one small (7B) model for everything, so it sometimes misses conflicts or accepts an answer that is
   related to the question but doesn't actually answer it.
-* The benchmark is small, synthetic, and written by the author. Treat small differences as noise.
+* The benchmark is small and the questions were written by the author. The main split is synthetic. The real
+  document split shows weaker results: extraction loses scope in legal text, conflict detection misses real
+  conflicts, and ingestion is slow. Treat small differences as noise.
 * English only. Scanned PDFs are not supported. The Docker setup has not been tested yet.
 
 ## License

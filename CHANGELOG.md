@@ -6,13 +6,13 @@ The goal was to make the v0.1 claims defensible, not to add features.
 
 ### Evaluation protocol
 * **New held-out split `test_v2`** (12 new document groups, 40 documents incl. one PDF and one DOCX, 81 questions,
-  22 gold conflict pairs). It was written and committed (`ccdaadb`) before any v0.2 code change and was
+  22 gold conflict pairs). It was written and committed (tag `test-v2-split`) before any v0.2 code change and was
   run only once, after development had stopped.
 * **The v0.1 test split is now development data** (`test_v1`). Its failures had been analysed, so it could not
   serve as an untouched test set again. v0.1 results are kept unchanged in `results/v0.1/`.
 * **T10 relabelled** in `test_v1` (VERIFIED "30 days" → NEEDS_REVIEW). The expenses group added before the v0.1
   run makes it an equal-authority contradiction. The reason is recorded in the question's `note`.
-* Relevance gate tuned on dev + test_v1 pooled (107 questions instead of 26).
+* Relevance gate tuned on dev + test_v1 pooled (114 questions instead of 26).
 * Clustered bootstrap CIs (resampling document groups), raw counts next to every rate, and repeated runs with
   different sampling seeds (`--llm-temperature`, `--llm-seed`, `--tag`, `evaluation/variance.py`).
 
@@ -42,8 +42,17 @@ The goal was to make the v0.1 claims defensible, not to add features.
 
 ### Results
 Held-out `test_v2` (81 questions, single run): B4 74/81 (91.4%) vs B0 66/81 and B3 68/81. Stale 0/21, unsupported
-4/23. Three sampled runs give B4 73–74/81. Details, failure analysis and limitations are in
-`docs/evaluation_report.md`.
+4/23. Three sampled runs give B4 73–74/81.
+
+Held-out `public_v1`: 44 questions over 14 real, unedited IRS and GOV.UK documents (tag `public-v1-split`), run
+once with the same frozen code.
+* B4 37/44, against B3 40/44 and B0 33/44.
+* Stale answers 0/25.
+* No wrong answer presented by B4. Its 7 failures were all refusals or review flags.
+* Conflict detection found 0 of 2 gold pairs.
+* Ingestion took 2 h 25 min.
+
+Details, failure analysis and limitations are in `docs/evaluation_report.md`.
 
 ## v0.1
 First complete version: ingestion, versioning, hybrid retrieval, claims, conflict detection, LangGraph agent,
