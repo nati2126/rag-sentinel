@@ -63,7 +63,7 @@ You need Python 3.11, [uv](https://docs.astral.sh/uv/) and [Ollama](https://olla
 6 GB of VRAM is recommended.
 
 ```powershell
-git clone <this repo> rag; cd rag
+git clone https://github.com/nati2126/-rag-sentinel.git rag; cd rag
 uv sync
 copy .env.example .env
 ollama pull qwen2.5:7b-instruct
