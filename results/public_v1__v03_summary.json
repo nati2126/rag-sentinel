@@ -1,0 +1,440 @@
+{
+  "split": "public_v1",
+  "tag": "v03",
+  "generated_at": "2026-11-27T10:57:00+00:00",
+  "as_of": "2026-10-01",
+  "questions": 44,
+  "environment": {
+    "llm": "qwen2.5:7b-instruct",
+    "embedder": "nomic-embed-text",
+    "reranker": "BAAI/bge-reranker-base",
+    "min_relevance": 0.0,
+    "llm_temperature": 0.0,
+    "llm_seed": 7,
+    "authority_margin": 0.12,
+    "predicate_similarity": 0.86,
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "ingestion": {
+    "documents": 14,
+    "chunks": 247,
+    "claims_accepted": 892,
+    "claims_rejected": 243,
+    "ingest_seconds": 2275.9,
+    "warnings": {}
+  },
+  "pipelines": {
+    "B0": {
+      "name": "B0",
+      "description": "Basic vector RAG (dense retrieval only)",
+      "retrieval_mode": "dense",
+      "rerank": false,
+      "temporal_ranking": false,
+      "ranking_preset": "default",
+      "metadata_in_prompt": false,
+      "conflict_detection": false,
+      "gating": false,
+      "answer_check": false,
+      "metrics": {
+        "n": 44,
+        "recall_at_5": 0.7037,
+        "mrr_at_5": 0.55,
+        "citation_precision": 0.4746,
+        "faithfulness_numeric": 0.9091,
+        "answer_accuracy": 0.6944,
+        "draft_answer_accuracy": 0.7222,
+        "stale_answer_rate": 0.12,
+        "stale_draft_rate": 0.16,
+        "unsupported_answer_rate": 0.0,
+        "abstention_rate": 0.25,
+        "abstention_precision": 0.7273,
+        "abstention_recall": 1.0,
+        "over_abstention_rate": 0.0833,
+        "decision_accuracy": 0.9318,
+        "reliability": 0.75,
+        "reliability_ci95": [
+          0.6136,
+          0.8636
+        ],
+        "reliability_ci95_clustered": [
+          0.6786,
+          0.875
+        ],
+        "latency_ms": {
+          "mean": 2071.125,
+          "p50": 1909.4,
+          "p95": 3222.5
+        },
+        "reliability_by_category": {
+          "historical": 0.75,
+          "multi_doc": 0.0,
+          "normal": 0.8333,
+          "outdated": 0.6429,
+          "unanswerable": 1.0
+        },
+        "counts": {
+          "questions": 44,
+          "reliable": 33,
+          "verified_gold": 36,
+          "correct_presented": 25,
+          "over_abstained": 3,
+          "abstain_gold": 8,
+          "unsupported_presented": 0,
+          "stale_questions": 25,
+          "stale_presented": 3,
+          "groups": 4
+        }
+      }
+    },
+    "B3": {
+      "name": "B3",
+      "description": "B2 + temporal & authority-aware evidence ranking",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": false,
+      "gating": false,
+      "answer_check": false,
+      "metrics": {
+        "n": 44,
+        "recall_at_5": 0.9028,
+        "mrr_at_5": 0.8157,
+        "citation_precision": 0.6875,
+        "faithfulness_numeric": 0.9189,
+        "answer_accuracy": 0.9444,
+        "draft_answer_accuracy": 0.9444,
+        "stale_answer_rate": 0.0,
+        "stale_draft_rate": 0.0,
+        "unsupported_answer_rate": 0.25,
+        "abstention_rate": 0.1591,
+        "abstention_precision": 0.8571,
+        "abstention_recall": 0.75,
+        "over_abstention_rate": 0.0278,
+        "decision_accuracy": 0.9318,
+        "reliability": 0.9091,
+        "reliability_ci95": [
+          0.8182,
+          0.9773
+        ],
+        "reliability_ci95_clustered": [
+          0.8511,
+          0.9655
+        ],
+        "latency_ms": {
+          "mean": 6066.9273,
+          "p50": 4504.5,
+          "p95": 5744.2
+        },
+        "reliability_by_category": {
+          "historical": 1.0,
+          "multi_doc": 0.5,
+          "normal": 0.9167,
+          "outdated": 1.0,
+          "unanswerable": 0.75
+        },
+        "counts": {
+          "questions": 44,
+          "reliable": 40,
+          "verified_gold": 36,
+          "correct_presented": 34,
+          "over_abstained": 1,
+          "abstain_gold": 8,
+          "unsupported_presented": 2,
+          "stale_questions": 25,
+          "stale_presented": 0,
+          "groups": 4
+        }
+      }
+    },
+    "B4": {
+      "name": "B4",
+      "description": "B3 + contradiction detection + evidence gating + answer check (RAG Sentinel)",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "answer_check": true,
+      "metrics": {
+        "n": 44,
+        "recall_at_5": 0.9028,
+        "mrr_at_5": 0.8157,
+        "citation_precision": 0.6667,
+        "faithfulness_numeric": 1.0,
+        "answer_accuracy": 0.9444,
+        "draft_answer_accuracy": 0.9444,
+        "stale_answer_rate": 0.0,
+        "stale_draft_rate": 0.0,
+        "unsupported_answer_rate": 0.0,
+        "abstention_rate": 0.2273,
+        "abstention_precision": 0.8,
+        "abstention_recall": 1.0,
+        "over_abstention_rate": 0.0556,
+        "decision_accuracy": 0.9318,
+        "reliability": 0.9545,
+        "reliability_ci95": [
+          0.8864,
+          1.0
+        ],
+        "reliability_ci95_clustered": [
+          0.92,
+          1.0
+        ],
+        "latency_ms": {
+          "mean": 6181.6886,
+          "p50": 6156.0,
+          "p95": 7597.4
+        },
+        "reliability_by_category": {
+          "historical": 1.0,
+          "multi_doc": 0.5,
+          "normal": 0.9167,
+          "outdated": 1.0,
+          "unanswerable": 1.0
+        },
+        "counts": {
+          "questions": 44,
+          "reliable": 42,
+          "verified_gold": 36,
+          "correct_presented": 34,
+          "over_abstained": 2,
+          "abstain_gold": 8,
+          "unsupported_presented": 0,
+          "stale_questions": 25,
+          "stale_presented": 0,
+          "groups": 4
+        }
+      }
+    }
+  },
+  "conflict_detection": {
+    "gold_pairs": 10,
+    "gold_actionable": 2,
+    "naive_value_difference": {
+      "precision": 0.0003,
+      "recall": 0.5,
+      "f1": 0.0006,
+      "tp": 1,
+      "fp": 3518,
+      "fn": 1,
+      "kind_accuracy_on_matched_gold_pairs": 0.0,
+      "gold_pairs_matched_any_kind": "6/10",
+      "false_positive_examples": [
+        {
+          "a": "irs_announcement_2026_11.md",
+          "a_value": "76 cents per mile",
+          "b": "hmrc_rates_and_thresholds_2025_to_2026.md",
+          "b_value": "advisory fuel rates",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_announcement_2026_11.md",
+          "a_value": "76 cents per mile",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "17 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_announcement_2026_11.md",
+          "a_value": "76 cents per mile",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "27 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_announcement_2026_11.md",
+          "a_value": "76 cents per mile",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "15 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_announcement_2026_11.md",
+          "a_value": "76 cents per mile",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "16 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_announcement_2026_11.md",
+          "a_value": "76 cents per mile",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "22 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "72.5 cents per mile driven",
+          "b": "hmrc_rates_and_thresholds_2025_to_2026.md",
+          "b_value": "advisory fuel rates",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "72.5 cents per mile driven",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "17 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "72.5 cents per mile driven",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "27 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "72.5 cents per mile driven",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "15 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "72.5 cents per mile driven",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "16 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "72.5 cents per mile driven",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "22 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "hmrc_rates_and_thresholds_2025_to_2026.md",
+          "a_value": "advisory fuel rates",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "17 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "hmrc_rates_and_thresholds_2025_to_2026.md",
+          "a_value": "advisory fuel rates",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "27 pence",
+          "kind": "contradiction"
+        },
+        {
+          "a": "hmrc_rates_and_thresholds_2025_to_2026.md",
+          "a_value": "advisory fuel rates",
+          "b": "hmrc_rates_and_thresholds_2026_to_2027.md",
+          "b_value": "15 pence",
+          "kind": "contradiction"
+        }
+      ],
+      "missed": [
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "20.5 cents",
+          "b": "irs_announcement_2026_11.md",
+          "b_value": "23.5 cents",
+          "kind": "outdated",
+          "topic": "medical standard mileage rate"
+        }
+      ]
+    },
+    "rules_only": {
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6667,
+      "tp": 1,
+      "fp": 0,
+      "fn": 1,
+      "kind_accuracy_on_matched_gold_pairs": 0.1667,
+      "gold_pairs_matched_any_kind": "6/10",
+      "false_positive_examples": [],
+      "missed": [
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "20.5 cents",
+          "b": "irs_announcement_2026_11.md",
+          "b_value": "23.5 cents",
+          "kind": "outdated",
+          "topic": "medical standard mileage rate"
+        }
+      ]
+    },
+    "rules_plus_llm_judge": {
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6667,
+      "tp": 1,
+      "fp": 0,
+      "fn": 1,
+      "kind_accuracy_on_matched_gold_pairs": 0.6667,
+      "gold_pairs_matched_any_kind": "6/10",
+      "false_positive_examples": [],
+      "missed": [
+        {
+          "a": "irs_news_ir_2025_128.md",
+          "a_value": "20.5 cents",
+          "b": "irs_announcement_2026_11.md",
+          "b_value": "23.5 cents",
+          "kind": "outdated",
+          "topic": "medical standard mileage rate"
+        }
+      ]
+    },
+    "detected_kinds": {
+      "complementary": 40,
+      "different_context": 1224,
+      "historical": 207,
+      "outdated": 1
+    }
+  },
+  "comparisons_vs_B4": {
+    "B0": {
+      "reliability_diff": {
+        "diff": 0.2045,
+        "ci95": [
+          0.0682,
+          0.3409
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.2045,
+        "ci95": [
+          0.0625,
+          0.3191
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 10,
+        "b10": 1,
+        "p_value": 0.0117
+      }
+    },
+    "B3": {
+      "reliability_diff": {
+        "diff": 0.0455,
+        "ci95": [
+          0.0,
+          0.1136
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0455,
+        "ci95": [
+          0.0,
+          0.08
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 2,
+        "b10": 0,
+        "p_value": 0.5
+      }
+    }
+  }
+}
