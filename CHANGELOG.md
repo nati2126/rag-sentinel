@@ -28,6 +28,21 @@
   June 2025" are recognised. A question about a period that ended before the reference date runs in
   historical mode, as of the end of the latest period named.
 
+* **Scope ties broken by value.** When the extractor leaves the scope out (a table row quoted as
+  "5 | £83.40"), every claim matches equally well. The closest value then decides which claims are paired.
+  On `public_v1` this cut the judge calls from 4,771 to 1,898 without losing a gold pair.
+
+#### Results
+Held-out `public_v2` (55 questions, run once with code tagged `v0.3-frozen`):
+* B4 42/55, the same as B3 (42/55), against B0 38/55.
+* B4 presented 9 wrong answers, against 13 for B3 and 16 for B0.
+* Stale answers 1/30. Unsupported answers 2/11 (B3 6/11).
+* Conflict detection found 0 of 2 actionable pairs.
+* Ingestion took 41 minutes for 17 documents.
+
+Development split `public_v1`: B4 went from 37/44 to 42/44. Failure analysis, including one regression caused
+by the new tax-year pattern, is in `docs/evaluation_report.md`.
+
 ### MCP server
 * `python -m rag_sentinel.mcp` exposes six read-only tools over stdio or Streamable HTTP:
   * `ask_verified`

@@ -47,6 +47,20 @@ A second held-out split of 44 questions over 14 real IRS and UK government docum
 * Conflict detection found none of the 2 real conflicts.
 * Analysing 14 long, table-heavy documents took 2.4 hours.
 
+v0.3 was developed on that split and then tested on a third held-out split of 55 questions over 17 new real
+documents (UK State Pension, VAT registration and student loans, IRS HSA limits):
+
+| | Plain RAG (B0) | Version-aware ranking (B3) | RAG Sentinel (B4) |
+|---|---|---|---|
+| Reliable answers | 38 / 55 | **42 / 55** | **42 / 55** |
+| Stale answers given | 8 / 30 | 2 / 30 | **1 / 30** |
+| Answered when it should have refused | 5 / 11 | 6 / 11 | **2 / 11** |
+| Wrong answers presented | 16 | 13 | **9** |
+
+* B4 ties B3. It presents fewer wrong answers, but no longer none: most of its 9 are wrong cells read from
+  long tables, and questions about future dates.
+* Conflict detection still found none of the 2 real conflicts. Analysis took 41 minutes for 17 documents.
+
 Full method, ablations and failure analysis are in the [evaluation report](docs/evaluation_report.md).
 
 ## Screenshots

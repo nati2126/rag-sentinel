@@ -1,0 +1,1188 @@
+{
+  "split": "public_v2",
+  "tag": "",
+  "generated_at": "2026-11-27T12:22:46+00:00",
+  "as_of": "2026-11-27",
+  "questions": 55,
+  "environment": {
+    "llm": "qwen2.5:7b-instruct",
+    "embedder": "nomic-embed-text",
+    "reranker": "BAAI/bge-reranker-base",
+    "min_relevance": 0.0,
+    "llm_temperature": 0.0,
+    "llm_seed": 7,
+    "authority_margin": 0.12,
+    "predicate_similarity": 0.86,
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "ingestion": {
+    "documents": 17,
+    "chunks": 107,
+    "claims_accepted": 523,
+    "claims_rejected": 124,
+    "ingest_seconds": 2462.8,
+    "warnings": {
+      "healthcare_gov_hsa_eligible_plans.md": [
+        "effective_date unknown (not in file or provided metadata)"
+      ],
+      "govuk_register_for_vat_2026.md": [
+        "supersedes 'govuk_vat_registration_2022.md' not found yet; will resolve when it is ingested"
+      ],
+      "hmrc_vat_notice_700_1_supplement.md": [
+        "effective_date unknown (not in file or provided metadata)"
+      ]
+    }
+  },
+  "pipelines": {
+    "B0": {
+      "name": "B0",
+      "description": "Basic vector RAG (dense retrieval only)",
+      "retrieval_mode": "dense",
+      "rerank": false,
+      "temporal_ranking": false,
+      "ranking_preset": "default",
+      "metadata_in_prompt": false,
+      "conflict_detection": false,
+      "gating": false,
+      "answer_check": false,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8182,
+        "mrr_at_5": 0.5443,
+        "citation_precision": 0.5169,
+        "faithfulness_numeric": 0.9375,
+        "answer_accuracy": 0.7273,
+        "draft_answer_accuracy": 0.7273,
+        "stale_answer_rate": 0.2667,
+        "stale_draft_rate": 0.2667,
+        "unsupported_answer_rate": 0.4545,
+        "abstention_rate": 0.1273,
+        "abstention_precision": 0.8571,
+        "abstention_recall": 0.5455,
+        "over_abstention_rate": 0.0227,
+        "decision_accuracy": 0.8909,
+        "reliability": 0.6909,
+        "reliability_ci95": [
+          0.5636,
+          0.8182
+        ],
+        "reliability_ci95_clustered": [
+          0.6066,
+          0.7778
+        ],
+        "latency_ms": {
+          "mean": 1969.14,
+          "p50": 1870.1,
+          "p95": 2721.7
+        },
+        "reliability_by_category": {
+          "historical": 0.6364,
+          "multi_doc": 0.6667,
+          "normal": 0.9167,
+          "outdated": 0.6667,
+          "unanswerable": 0.5455
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 38,
+          "verified_gold": 44,
+          "correct_presented": 32,
+          "over_abstained": 1,
+          "abstain_gold": 11,
+          "unsupported_presented": 5,
+          "stale_questions": 30,
+          "stale_presented": 8,
+          "groups": 4
+        }
+      }
+    },
+    "B1": {
+      "name": "B1",
+      "description": "Hybrid RAG (dense + BM25, RRF)",
+      "retrieval_mode": "hybrid",
+      "rerank": false,
+      "temporal_ranking": false,
+      "ranking_preset": "default",
+      "metadata_in_prompt": false,
+      "conflict_detection": false,
+      "gating": false,
+      "answer_check": false,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8523,
+        "mrr_at_5": 0.6898,
+        "citation_precision": 0.4419,
+        "faithfulness_numeric": 0.9565,
+        "answer_accuracy": 0.7045,
+        "draft_answer_accuracy": 0.7273,
+        "stale_answer_rate": 0.3,
+        "stale_draft_rate": 0.3,
+        "unsupported_answer_rate": 0.2727,
+        "abstention_rate": 0.1636,
+        "abstention_precision": 0.8889,
+        "abstention_recall": 0.7273,
+        "over_abstention_rate": 0.0227,
+        "decision_accuracy": 0.9273,
+        "reliability": 0.7091,
+        "reliability_ci95": [
+          0.5818,
+          0.8182
+        ],
+        "reliability_ci95_clustered": [
+          0.5862,
+          0.8462
+        ],
+        "latency_ms": {
+          "mean": 1882.8636,
+          "p50": 1795.2,
+          "p95": 2582.8
+        },
+        "reliability_by_category": {
+          "historical": 0.6364,
+          "multi_doc": 0.6667,
+          "normal": 0.9167,
+          "outdated": 0.6111,
+          "unanswerable": 0.7273
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 39,
+          "verified_gold": 44,
+          "correct_presented": 31,
+          "over_abstained": 1,
+          "abstain_gold": 11,
+          "unsupported_presented": 3,
+          "stale_questions": 30,
+          "stale_presented": 9,
+          "groups": 4
+        }
+      }
+    },
+    "B2": {
+      "name": "B2",
+      "description": "Hybrid RAG + cross-encoder reranking",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": false,
+      "ranking_preset": "default",
+      "metadata_in_prompt": false,
+      "conflict_detection": false,
+      "gating": false,
+      "answer_check": false,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8295,
+        "mrr_at_5": 0.6716,
+        "citation_precision": 0.4405,
+        "faithfulness_numeric": 0.8667,
+        "answer_accuracy": 0.7045,
+        "draft_answer_accuracy": 0.7045,
+        "stale_answer_rate": 0.2,
+        "stale_draft_rate": 0.2,
+        "unsupported_answer_rate": 0.2727,
+        "abstention_rate": 0.1818,
+        "abstention_precision": 0.8,
+        "abstention_recall": 0.7273,
+        "over_abstention_rate": 0.0455,
+        "decision_accuracy": 0.9091,
+        "reliability": 0.7091,
+        "reliability_ci95": [
+          0.5818,
+          0.8182
+        ],
+        "reliability_ci95_clustered": [
+          0.5167,
+          0.8462
+        ],
+        "latency_ms": {
+          "mean": 4063.6291,
+          "p50": 4083.7,
+          "p95": 4950.3
+        },
+        "reliability_by_category": {
+          "historical": 0.6364,
+          "multi_doc": 0.3333,
+          "normal": 0.9167,
+          "outdated": 0.6667,
+          "unanswerable": 0.7273
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 39,
+          "verified_gold": 44,
+          "correct_presented": 31,
+          "over_abstained": 2,
+          "abstain_gold": 11,
+          "unsupported_presented": 3,
+          "stale_questions": 30,
+          "stale_presented": 6,
+          "groups": 4
+        }
+      }
+    },
+    "B3": {
+      "name": "B3",
+      "description": "B2 + temporal & authority-aware evidence ranking",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": false,
+      "gating": false,
+      "answer_check": false,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8864,
+        "mrr_at_5": 0.8208,
+        "citation_precision": 0.625,
+        "faithfulness_numeric": 0.82,
+        "answer_accuracy": 0.8409,
+        "draft_answer_accuracy": 0.8409,
+        "stale_answer_rate": 0.0667,
+        "stale_draft_rate": 0.0667,
+        "unsupported_answer_rate": 0.5455,
+        "abstention_rate": 0.0909,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.4545,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.8909,
+        "reliability": 0.7636,
+        "reliability_ci95": [
+          0.6545,
+          0.8727
+        ],
+        "reliability_ci95_clustered": [
+          0.7091,
+          0.8276
+        ],
+        "latency_ms": {
+          "mean": 4654.3127,
+          "p50": 4277.6,
+          "p95": 4971.6
+        },
+        "reliability_by_category": {
+          "historical": 0.8182,
+          "multi_doc": 0.3333,
+          "normal": 1.0,
+          "outdated": 0.8333,
+          "unanswerable": 0.4545
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 42,
+          "verified_gold": 44,
+          "correct_presented": 37,
+          "over_abstained": 0,
+          "abstain_gold": 11,
+          "unsupported_presented": 6,
+          "stale_questions": 30,
+          "stale_presented": 2,
+          "groups": 4
+        }
+      }
+    },
+    "B4": {
+      "name": "B4",
+      "description": "B3 + contradiction detection + evidence gating + answer check (RAG Sentinel)",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "answer_check": true,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8864,
+        "mrr_at_5": 0.8208,
+        "citation_precision": 0.5714,
+        "faithfulness_numeric": 0.8958,
+        "answer_accuracy": 0.75,
+        "draft_answer_accuracy": 0.7955,
+        "stale_answer_rate": 0.0333,
+        "stale_draft_rate": 0.1,
+        "unsupported_answer_rate": 0.1818,
+        "abstention_rate": 0.2364,
+        "abstention_precision": 0.6923,
+        "abstention_recall": 0.8182,
+        "over_abstention_rate": 0.0909,
+        "decision_accuracy": 0.8727,
+        "reliability": 0.7636,
+        "reliability_ci95": [
+          0.6364,
+          0.8727
+        ],
+        "reliability_ci95_clustered": [
+          0.6667,
+          0.86
+        ],
+        "latency_ms": {
+          "mean": 5786.7909,
+          "p50": 5762.5,
+          "p95": 7473.3
+        },
+        "reliability_by_category": {
+          "historical": 0.6364,
+          "multi_doc": 0.3333,
+          "normal": 0.8333,
+          "outdated": 0.8333,
+          "unanswerable": 0.8182
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 42,
+          "verified_gold": 44,
+          "correct_presented": 33,
+          "over_abstained": 4,
+          "abstain_gold": 11,
+          "unsupported_presented": 2,
+          "stale_questions": 30,
+          "stale_presented": 1,
+          "groups": 4
+        }
+      }
+    },
+    "B4-no-rerank": {
+      "name": "B4-no-rerank",
+      "description": "B4 without reranking (no calibrated relevance gate)",
+      "retrieval_mode": "hybrid",
+      "rerank": false,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "answer_check": true,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.9432,
+        "mrr_at_5": 0.7973,
+        "citation_precision": 0.6081,
+        "faithfulness_numeric": 0.9149,
+        "answer_accuracy": 0.8636,
+        "draft_answer_accuracy": 0.9318,
+        "stale_answer_rate": 0.0,
+        "stale_draft_rate": 0.0333,
+        "unsupported_answer_rate": 0.1818,
+        "abstention_rate": 0.2545,
+        "abstention_precision": 0.6429,
+        "abstention_recall": 0.8182,
+        "over_abstention_rate": 0.1136,
+        "decision_accuracy": 0.8545,
+        "reliability": 0.8545,
+        "reliability_ci95": [
+          0.7455,
+          0.9455
+        ],
+        "reliability_ci95_clustered": [
+          0.7778,
+          0.9286
+        ],
+        "latency_ms": {
+          "mean": 3568.1527,
+          "p50": 3589.7,
+          "p95": 5296.7
+        },
+        "reliability_by_category": {
+          "historical": 0.8182,
+          "multi_doc": 0.0,
+          "normal": 0.9167,
+          "outdated": 1.0,
+          "unanswerable": 0.8182
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 47,
+          "verified_gold": 44,
+          "correct_presented": 38,
+          "over_abstained": 5,
+          "abstain_gold": 11,
+          "unsupported_presented": 2,
+          "stale_questions": 30,
+          "stale_presented": 0,
+          "groups": 4
+        }
+      }
+    },
+    "B4-relevance-ranking": {
+      "name": "B4-relevance-ranking",
+      "description": "B4 with evidence ranked by relevance only",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "relevance_only",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "answer_check": true,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8295,
+        "mrr_at_5": 0.6716,
+        "citation_precision": 0.6032,
+        "faithfulness_numeric": 0.8776,
+        "answer_accuracy": 0.5909,
+        "draft_answer_accuracy": 0.7273,
+        "stale_answer_rate": 0.0333,
+        "stale_draft_rate": 0.1,
+        "unsupported_answer_rate": 0.2727,
+        "abstention_rate": 0.3091,
+        "abstention_precision": 0.4706,
+        "abstention_recall": 0.7273,
+        "over_abstention_rate": 0.2045,
+        "decision_accuracy": 0.7818,
+        "reliability": 0.6182,
+        "reliability_ci95": [
+          0.4909,
+          0.7455
+        ],
+        "reliability_ci95_clustered": [
+          0.5172,
+          0.7308
+        ],
+        "latency_ms": {
+          "mean": 5909.3727,
+          "p50": 5998.1,
+          "p95": 7704.2
+        },
+        "reliability_by_category": {
+          "historical": 0.5455,
+          "multi_doc": 0.0,
+          "normal": 0.6667,
+          "outdated": 0.6667,
+          "unanswerable": 0.7273
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 34,
+          "verified_gold": 44,
+          "correct_presented": 26,
+          "over_abstained": 9,
+          "abstain_gold": 11,
+          "unsupported_presented": 3,
+          "stale_questions": 30,
+          "stale_presented": 1,
+          "groups": 4
+        }
+      }
+    },
+    "B4-newest-wins": {
+      "name": "B4-newest-wins",
+      "description": "B4 with naive newest-document-wins ranking",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "newest_wins",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "answer_check": true,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.7614,
+        "mrr_at_5": 0.6674,
+        "citation_precision": 0.5273,
+        "faithfulness_numeric": 0.8723,
+        "answer_accuracy": 0.6136,
+        "draft_answer_accuracy": 0.7727,
+        "stale_answer_rate": 0.0333,
+        "stale_draft_rate": 0.1333,
+        "unsupported_answer_rate": 0.1818,
+        "abstention_rate": 0.4,
+        "abstention_precision": 0.4091,
+        "abstention_recall": 0.8182,
+        "over_abstention_rate": 0.2955,
+        "decision_accuracy": 0.7273,
+        "reliability": 0.6545,
+        "reliability_ci95": [
+          0.5273,
+          0.7818
+        ],
+        "reliability_ci95_clustered": [
+          0.4902,
+          0.7857
+        ],
+        "latency_ms": {
+          "mean": 5535.7018,
+          "p50": 5424.5,
+          "p95": 7847.3
+        },
+        "reliability_by_category": {
+          "historical": 0.2727,
+          "multi_doc": 0.0,
+          "normal": 0.75,
+          "outdated": 0.8333,
+          "unanswerable": 0.8182
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 36,
+          "verified_gold": 44,
+          "correct_presented": 27,
+          "over_abstained": 13,
+          "abstain_gold": 11,
+          "unsupported_presented": 2,
+          "stale_questions": 30,
+          "stale_presented": 1,
+          "groups": 4
+        }
+      }
+    },
+    "B4-no-conflicts": {
+      "name": "B4-no-conflicts",
+      "description": "B4 without contradiction detection",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": false,
+      "gating": true,
+      "answer_check": true,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8864,
+        "mrr_at_5": 0.8208,
+        "citation_precision": 0.6377,
+        "faithfulness_numeric": 0.92,
+        "answer_accuracy": 0.7273,
+        "draft_answer_accuracy": 0.8182,
+        "stale_answer_rate": 0.0333,
+        "stale_draft_rate": 0.0667,
+        "unsupported_answer_rate": 0.2727,
+        "abstention_rate": 0.2364,
+        "abstention_precision": 0.6154,
+        "abstention_recall": 0.7273,
+        "over_abstention_rate": 0.1136,
+        "decision_accuracy": 0.8364,
+        "reliability": 0.7273,
+        "reliability_ci95": [
+          0.6182,
+          0.8364
+        ],
+        "reliability_ci95_clustered": [
+          0.6545,
+          0.7759
+        ],
+        "latency_ms": {
+          "mean": 5096.7018,
+          "p50": 5137.4,
+          "p95": 6895.9
+        },
+        "reliability_by_category": {
+          "historical": 0.6364,
+          "multi_doc": 0.0,
+          "normal": 0.8333,
+          "outdated": 0.8333,
+          "unanswerable": 0.7273
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 40,
+          "verified_gold": 44,
+          "correct_presented": 32,
+          "over_abstained": 5,
+          "abstain_gold": 11,
+          "unsupported_presented": 3,
+          "stale_questions": 30,
+          "stale_presented": 1,
+          "groups": 4
+        }
+      }
+    },
+    "B4-no-gating": {
+      "name": "B4-no-gating",
+      "description": "B4 without the verification gate",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": false,
+      "answer_check": true,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8864,
+        "mrr_at_5": 0.8208,
+        "citation_precision": 0.5,
+        "faithfulness_numeric": 0.7755,
+        "answer_accuracy": 0.7955,
+        "draft_answer_accuracy": 0.7955,
+        "stale_answer_rate": 0.1,
+        "stale_draft_rate": 0.1,
+        "unsupported_answer_rate": 0.4545,
+        "abstention_rate": 0.1091,
+        "abstention_precision": 1.0,
+        "abstention_recall": 0.5455,
+        "over_abstention_rate": 0.0,
+        "decision_accuracy": 0.9091,
+        "reliability": 0.7455,
+        "reliability_ci95": [
+          0.6182,
+          0.8545
+        ],
+        "reliability_ci95_clustered": [
+          0.68,
+          0.8
+        ],
+        "latency_ms": {
+          "mean": 4293.4073,
+          "p50": 4249.6,
+          "p95": 5224.9
+        },
+        "reliability_by_category": {
+          "historical": 0.7273,
+          "multi_doc": 0.3333,
+          "normal": 0.9167,
+          "outdated": 0.8333,
+          "unanswerable": 0.5455
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 41,
+          "verified_gold": 44,
+          "correct_presented": 35,
+          "over_abstained": 0,
+          "abstain_gold": 11,
+          "unsupported_presented": 5,
+          "stale_questions": 30,
+          "stale_presented": 3,
+          "groups": 4
+        }
+      }
+    },
+    "B4-no-answer-check": {
+      "name": "B4-no-answer-check",
+      "description": "B4 without the answer check (R9, R10)",
+      "retrieval_mode": "hybrid",
+      "rerank": true,
+      "temporal_ranking": true,
+      "ranking_preset": "default",
+      "metadata_in_prompt": true,
+      "conflict_detection": true,
+      "gating": true,
+      "answer_check": false,
+      "metrics": {
+        "n": 55,
+        "recall_at_5": 0.8864,
+        "mrr_at_5": 0.8208,
+        "citation_precision": 0.5672,
+        "faithfulness_numeric": 0.8958,
+        "answer_accuracy": 0.75,
+        "draft_answer_accuracy": 0.7955,
+        "stale_answer_rate": 0.0333,
+        "stale_draft_rate": 0.1,
+        "unsupported_answer_rate": 0.2727,
+        "abstention_rate": 0.2182,
+        "abstention_precision": 0.6667,
+        "abstention_recall": 0.7273,
+        "over_abstention_rate": 0.0909,
+        "decision_accuracy": 0.8545,
+        "reliability": 0.7455,
+        "reliability_ci95": [
+          0.6182,
+          0.8545
+        ],
+        "reliability_ci95_clustered": [
+          0.6667,
+          0.8214
+        ],
+        "latency_ms": {
+          "mean": 3923.4309,
+          "p50": 3807.8,
+          "p95": 4774.0
+        },
+        "reliability_by_category": {
+          "historical": 0.6364,
+          "multi_doc": 0.3333,
+          "normal": 0.8333,
+          "outdated": 0.8333,
+          "unanswerable": 0.7273
+        },
+        "counts": {
+          "questions": 55,
+          "reliable": 41,
+          "verified_gold": 44,
+          "correct_presented": 33,
+          "over_abstained": 4,
+          "abstain_gold": 11,
+          "unsupported_presented": 3,
+          "stale_questions": 30,
+          "stale_presented": 1,
+          "groups": 4
+        }
+      }
+    }
+  },
+  "conflict_detection": {
+    "gold_pairs": 12,
+    "gold_actionable": 2,
+    "naive_value_difference": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 806,
+      "fn": 2,
+      "kind_accuracy_on_matched_gold_pairs": 0.0,
+      "gold_pairs_matched_any_kind": "5/12",
+      "false_positive_examples": [
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "contact insurance company",
+          "b": "govuk_register_for_vat_2026.md",
+          "b_value": "all zero-rated",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "work with banks",
+          "b": "govuk_register_for_vat_2026.md",
+          "b_value": "all zero-rated",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "ask employer",
+          "b": "govuk_register_for_vat_2026.md",
+          "b_value": "all zero-rated",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "higher",
+          "b": "irs_rp_23_23.pdf",
+          "b_value": "$1,600 for self-only coverage or $3,200 for family coverage",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "higher",
+          "b": "irs_rp_23_23.pdf",
+          "b_value": "$4,150",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "higher",
+          "b": "irs_rp_24_25.pdf",
+          "b_value": "$3,300",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "higher",
+          "b": "irs_rp_24_25.pdf",
+          "b_value": "$1,650",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "higher",
+          "b": "irs_rp_25_19.pdf",
+          "b_value": "$1,700 for self-only coverage or $3,400 for family coverage",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "higher",
+          "b": "irs_rp_25_19.pdf",
+          "b_value": "$4,400",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "minimum",
+          "b": "irs_rp_23_23.pdf",
+          "b_value": "$1,600 for self-only coverage or $3,200 for family coverage",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "minimum",
+          "b": "irs_rp_23_23.pdf",
+          "b_value": "$4,150",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "minimum",
+          "b": "irs_rp_24_25.pdf",
+          "b_value": "$3,300",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "minimum",
+          "b": "irs_rp_24_25.pdf",
+          "b_value": "$1,650",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "minimum",
+          "b": "irs_rp_25_19.pdf",
+          "b_value": "$1,700 for self-only coverage or $3,400 for family coverage",
+          "kind": "contradiction"
+        },
+        {
+          "a": "healthcare_gov_hsa_eligible_plans.md",
+          "a_value": "minimum",
+          "b": "irs_rp_25_19.pdf",
+          "b_value": "$4,400",
+          "kind": "contradiction"
+        }
+      ],
+      "missed": [
+        {
+          "a": "dwp_news_2025_04_06.md",
+          "a_value": "\u00a3230.25",
+          "b": "govuk_new_state_pension_2026.md",
+          "b_value": "\u00a3241.30",
+          "kind": "outdated",
+          "topic": "full rate of the new State Pension"
+        },
+        {
+          "a": "dwp_news_2025_04_06.md",
+          "a_value": "\u00a3176.45",
+          "b": "dwp_news_2026_04_04.md",
+          "b_value": "\u00a3184.90",
+          "kind": "outdated",
+          "topic": "full basic State Pension"
+        }
+      ]
+    },
+    "rules_only": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 2,
+      "fn": 2,
+      "kind_accuracy_on_matched_gold_pairs": 0.2,
+      "gold_pairs_matched_any_kind": "5/12",
+      "false_positive_examples": [
+        {
+          "a": "dwp_news_2026_04_04.md",
+          "a_value": "up to \u00a32,100",
+          "b": "dwp_news_2025_04_06.md",
+          "b_value": "up to \u00a3470",
+          "kind": "contradiction",
+          "explanation": "Unresolved: 'Press release: Over 12 million pensioners to receive \u00a3575 State Pension boost' states 'up to \u00a32,100' and 'Press release: Huge income boost for millions of pensioners and working people' states 'up to \u00a3470'; neither source clearly outranks the other (standing 0.75 vs 0.75)."
+        },
+        {
+          "a": "dwp_news_2026_04_04.md",
+          "a_value": "up to \u00a32,100 over this parliament",
+          "b": "dwp_news_2025_04_06.md",
+          "b_value": "up to \u00a31,900",
+          "kind": "contradiction",
+          "explanation": "Unresolved: 'Press release: Over 12 million pensioners to receive \u00a3575 State Pension boost' states 'up to \u00a32,100 over this parliament' and 'Press release: Huge income boost for millions of pensioners and working people' states 'up to \u00a31,900'; neither source clearly outranks the other (standing 0.75 vs 0.75)."
+        }
+      ],
+      "missed": [
+        {
+          "a": "dwp_news_2025_04_06.md",
+          "a_value": "\u00a3230.25",
+          "b": "govuk_new_state_pension_2026.md",
+          "b_value": "\u00a3241.30",
+          "kind": "outdated",
+          "topic": "full rate of the new State Pension"
+        },
+        {
+          "a": "dwp_news_2025_04_06.md",
+          "a_value": "\u00a3176.45",
+          "b": "dwp_news_2026_04_04.md",
+          "b_value": "\u00a3184.90",
+          "kind": "outdated",
+          "topic": "full basic State Pension"
+        }
+      ]
+    },
+    "rules_plus_llm_judge": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 3,
+      "fn": 2,
+      "kind_accuracy_on_matched_gold_pairs": 0.8,
+      "gold_pairs_matched_any_kind": "5/12",
+      "false_positive_examples": [
+        {
+          "a": "dwp_news_2026_04_04.md",
+          "a_value": "up to \u00a32,100",
+          "b": "dwp_news_2025_04_06.md",
+          "b_value": "up to \u00a3470",
+          "kind": "contradiction",
+          "explanation": "Unresolved: 'Press release: Over 12 million pensioners to receive \u00a3575 State Pension boost' states 'up to \u00a32,100' and 'Press release: Huge income boost for millions of pensioners and working people' states 'up to \u00a3470'; neither source clearly outranks the other (standing 0.75 vs 0.75). The semantic judge considers these claims different context; the finding is kept for review because subject, attribute and values match by rule."
+        },
+        {
+          "a": "dwp_news_2026_04_04.md",
+          "a_value": "6 April",
+          "b": "dwp_news_2025_04_06.md",
+          "b_value": "6 April 2025",
+          "kind": "contradiction",
+          "explanation": "Unresolved: 'Press release: Over 12 million pensioners to receive \u00a3575 State Pension boost' states '6 April' and 'Press release: Huge income boost for millions of pensioners and working people' states '6 April 2025'; neither source clearly outranks the other (standing 0.75 vs 0.75)."
+        },
+        {
+          "a": "dwp_news_2026_04_04.md",
+          "a_value": "up to \u00a32,100 over this parliament",
+          "b": "dwp_news_2025_04_06.md",
+          "b_value": "up to \u00a31,900",
+          "kind": "contradiction",
+          "explanation": "Unresolved: 'Press release: Over 12 million pensioners to receive \u00a3575 State Pension boost' states 'up to \u00a32,100 over this parliament' and 'Press release: Huge income boost for millions of pensioners and working people' states 'up to \u00a31,900'; neither source clearly outranks the other (standing 0.75 vs 0.75). The semantic judge considers these claims different context; the finding is kept for review because subject, attribute and values match by rule."
+        }
+      ],
+      "missed": [
+        {
+          "a": "dwp_news_2025_04_06.md",
+          "a_value": "\u00a3230.25",
+          "b": "govuk_new_state_pension_2026.md",
+          "b_value": "\u00a3241.30",
+          "kind": "outdated",
+          "topic": "full rate of the new State Pension"
+        },
+        {
+          "a": "dwp_news_2025_04_06.md",
+          "a_value": "\u00a3176.45",
+          "b": "dwp_news_2026_04_04.md",
+          "b_value": "\u00a3184.90",
+          "kind": "outdated",
+          "topic": "full basic State Pension"
+        }
+      ]
+    },
+    "detected_kinds": {
+      "complementary": 61,
+      "contradiction": 3,
+      "different_context": 538,
+      "historical": 57
+    }
+  },
+  "comparisons_vs_B4": {
+    "B0": {
+      "reliability_diff": {
+        "diff": 0.0727,
+        "ci95": [
+          -0.0727,
+          0.2182
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0727,
+        "ci95": [
+          -0.1111,
+          0.25
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 10,
+        "b10": 6,
+        "p_value": 0.4545
+      }
+    },
+    "B1": {
+      "reliability_diff": {
+        "diff": 0.0545,
+        "ci95": [
+          -0.0727,
+          0.1818
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0545,
+        "ci95": [
+          -0.0909,
+          0.1639
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 8,
+        "b10": 5,
+        "p_value": 0.5811
+      }
+    },
+    "B2": {
+      "reliability_diff": {
+        "diff": 0.0545,
+        "ci95": [
+          -0.0727,
+          0.1636
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0545,
+        "ci95": [
+          -0.1481,
+          0.2623
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 7,
+        "b10": 4,
+        "p_value": 0.5488
+      }
+    },
+    "B3": {
+      "reliability_diff": {
+        "diff": 0.0,
+        "ci95": [
+          -0.1091,
+          0.1091
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0,
+        "ci95": [
+          -0.1111,
+          0.1071
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 4,
+        "b10": 4,
+        "p_value": 1.0
+      }
+    },
+    "B4-no-rerank": {
+      "reliability_diff": {
+        "diff": -0.0909,
+        "ci95": [
+          -0.1818,
+          0.0
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": -0.0909,
+        "ci95": [
+          -0.1379,
+          -0.0385
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 1,
+        "b10": 6,
+        "p_value": 0.125
+      }
+    },
+    "B4-relevance-ranking": {
+      "reliability_diff": {
+        "diff": 0.1455,
+        "ci95": [
+          0.0545,
+          0.2545
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.1455,
+        "ci95": [
+          0.037,
+          0.2295
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 8,
+        "b10": 0,
+        "p_value": 0.0078
+      }
+    },
+    "B4-newest-wins": {
+      "reliability_diff": {
+        "diff": 0.1091,
+        "ci95": [
+          0.0364,
+          0.2
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.1091,
+        "ci95": [
+          0.0667,
+          0.1887
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 6,
+        "b10": 0,
+        "p_value": 0.0312
+      }
+    },
+    "B4-no-conflicts": {
+      "reliability_diff": {
+        "diff": 0.0364,
+        "ci95": [
+          -0.0545,
+          0.1273
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0364,
+        "ci95": [
+          -0.037,
+          0.1224
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 4,
+        "b10": 2,
+        "p_value": 0.6875
+      }
+    },
+    "B4-no-gating": {
+      "reliability_diff": {
+        "diff": 0.0182,
+        "ci95": [
+          -0.0545,
+          0.0909
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0182,
+        "ci95": [
+          -0.0741,
+          0.1633
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 3,
+        "b10": 2,
+        "p_value": 1.0
+      }
+    },
+    "B4-no-answer-check": {
+      "reliability_diff": {
+        "diff": 0.0182,
+        "ci95": [
+          0.0,
+          0.0545
+        ]
+      },
+      "reliability_diff_clustered": {
+        "diff": 0.0182,
+        "ci95": [
+          0.0,
+          0.06
+        ],
+        "clusters": 4
+      },
+      "mcnemar": {
+        "b01": 1,
+        "b10": 0,
+        "p_value": 1.0
+      }
+    }
+  }
+}

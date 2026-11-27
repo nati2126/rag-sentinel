@@ -1,9 +1,111 @@
-# Evaluation report v0.2: VersionConflict benchmark
+# Evaluation report: VersionConflict benchmark
 
-v0.2 is a reliability-hardening release (see `CHANGELOG.md`). This report covers the **held-out `test_v2`
-split, run once**, a second held-out split of **real, unedited IRS and UK government documents (`public_v1`),
+The first section covers **v0.3** (real-document robustness): a new held-out split of real documents,
+**`public_v2`, run once**. The rest of the report covers v0.2 (a reliability-hardening release; see
+`CHANGELOG.md`): the **held-out `test_v2` split, run once**, the first real-document split **`public_v1`,
 also run once**, and the development results that informed v0.2. The v0.1 report is kept unchanged in
 `docs/evaluation_report_v0.1.md`.
+
+## v0.3: real documents (public_v2, held out, single run)
+
+**Protocol.**
+* `public_v2` was written and committed (tag `public-v2-split`) before any v0.3 code change.
+* It has 55 questions over 17 real documents in 4 groups:
+  * the GOV.UK new State Pension page in three versions, plus two DWP press releases;
+  * VAT registration (two guide versions, the 2024 threshold policy paper, the VAT Notice 700/1 supplement);
+  * the GOV.UK student loan repayment page in three versions;
+  * the IRS HSA Revenue Procedures for 2024–2027, plus a HealthCare.gov page.
+* Superseded GOV.UK versions are Internet Archive captures. Sources are in `benchmark/README.md`.
+* Questions: outdated 18, normal 12, historical 11, unanswerable 11 and multi-document 3. There are 12 gold
+  conflict pairs, 2 of them actionable.
+* The reference date is 2026-11-27, the download date, because some current pages were updated after the
+  2026-10-01 date used by the other splits.
+* All v0.3 changes were developed on `public_v1`, which is now development data. The code was frozen (tag
+  `v0.3-frozen`) before this run, and nothing was changed after it.
+* The same author wrote the questions and the system.
+
+**Development result (`public_v1`, not held out).** B4 went from 37/44 to 42/44. Over-abstention fell from
+7/36 to 2/36, with still no stale or unsupported answer presented. B0 and B3 were unchanged (33 and 40).
+Conflict detection found 1 of 2 actionable pairs with no false positive (v0.2: 0 of 2, with 7 false
+positives). This was measured on the data the fixes were made for, so it shows that the fixes work as
+intended, not how well they generalise. Tables: `results/public_v1__v03_tables.md`.
+
+**Held-out result.**
+
+| Pipeline | Reliable | Stale presented | Unsupported presented | Over-abstained | Wrong answers presented |
+|---|---|---|---|---|---|
+| B0 vector RAG | 38/55 (69.1%) | 8/30 | 5/11 | 1/44 | 16 |
+| B3 + temporal / authority ranking | 42/55 (76.4%) | 2/30 | 6/11 | **0/44** | 13 |
+| B4 RAG Sentinel | 42/55 (76.4%) | 1/30 | **2/11** | 4/44 | 9 |
+| B4 without reranker | **47/55 (85.5%)** | **0/30** | **2/11** | 5/44 | **3** |
+| B4 without gating rules | 41/55 (74.6%) | 3/30 | 5/11 | 0/44 | 14 |
+
+*Wrong answers presented* counts answers shown as reliable that were stale, incorrect or should have been
+refused.
+
+What this shows:
+
+* **B4 ties B3 on reliability.**
+  * Both have 42/55. B4 is better on 4 questions and worse on 4 (McNemar p = 1.0).
+  * Against B0, B4 is +7.3 points, with clustered CI [−11.1, +25.0] and McNemar p = 0.45. That is not
+    significant.
+* **B4 presents fewer wrong answers than B3 (9 against 13), but not none.**
+  * On `public_v1` B4 presented no wrong answer. Here it presented 9.
+  * Four are wrong or related values read from long pages, and one is stale. Two are future-dated
+    questions, and two are comparisons of two periods (see the failure analysis).
+  * Without the reranker, the four wrong values and the stale one were all answered correctly.
+* **Unsupported answers fall, as designed.** B4 answered 2 of 11 unanswerable questions, B3 answered 6.
+* **Stale answers stay low.** B4 presented 1/30 stale answers, B3 2/30 and B0 8/30. Version and authority
+  ranking does most of this: without it (`B4-relevance-ranking`) reliability drops to 34/55.
+* **Without the reranker, B4 scored 47/55 on this split.**
+  * That is 6 questions better and 1 worse than B4. The clustered CI of the difference is [+3.8, +13.8]
+    points, and McNemar p = 0.13.
+  * The reranker reordered the passages of the long student-loan and pension pages so that the generator read
+    the wrong table cell. R28 is an example: Plan 2 was answered with £21,000, the postgraduate threshold.
+  * The effect is the opposite on the other splits: without the reranker B4 scored 35 instead of 37 on
+    `public_v1`, and 71 instead of 74 on `test_v2`.
+  * So this is not evidence for removing the reranker. It shows that how passages are ordered matters on
+    table-heavy pages.
+* **Conflict detection still does not work on real documents.**
+  * It found 0 of 2 actionable gold pairs, with 3 false positives. All 3 compare the 2025 and 2026 press
+    releases ("up to £2,100" vs "up to £470").
+  * Both misses pair the 2025 press release with a newer source: the 2026 guide page for the new State
+    Pension, and the 2026 press release for the basic State Pension.
+  * A naive "values differ" detector would flag 806 pairs.
+* **Ingestion is faster.**
+  * The 17 documents (107 chunks) took 41 minutes, with 717 judge calls.
+  * v0.2 took 2 h 25 min for the 247 chunks of `public_v1`. On `public_v1`, scoped pairs cut the judge calls
+    from 4,771 to 1,898.
+  * Another benchmark from a separate project was running on the same machine during this run, so the times
+    are upper bounds.
+* **The citation rule R4 no longer fires.** It refused 3 answers on `public_v1` in v0.2, and none in either
+  v0.3 run.
+
+### Failure analysis (B4 on public_v2, 13 of 55)
+
+| Question | What happened |
+|---|---|
+| R28, R38 | **Wrong table cell.** The student-loan page has one table with yearly, monthly and weekly thresholds for every plan. R28 gave £21,000, the postgraduate threshold, for Plan 2. R38 gave the monthly £2,274 as the yearly threshold. Every rule passed, because the value is in the cited evidence. Without the reranker both were answered correctly. |
+| R02, R24 | **Related value instead of the one asked.** R02 asked for the basic State Pension and got the new State Pension rate. R24 asked for the Northern Ireland distance-selling threshold (£8,818) and got the registration threshold (£90,000). The answer check accepted both. This is the related-fact failure known from v0.2. Without the reranker both were answered correctly. |
+| R04 | **Stale value.** The 2025 press release's Pension Credit amount (£227.10) was given, not the 2026 one (£238.00). The two releases have the same authority and no version link, so only the dates separate them, and conflict detection missed the pair. Without the reranker the 2026 value was given. |
+| R12, R27 | **Future questions answered with the current value.** "What will … be from April 2027?" ran in historical mode with an as-of date in the future. The current documents count as in force on that date, so the current value was VERIFIED. No rule treats an as-of date after the reference date as unknown. |
+| R52 | **v0.3 regression.** The new tax-year pattern read "from 2025 to 2026" (two calendar years) as the UK tax year 2025–26. The query then ran as of 5 April 2026, where only the 2026 Revenue Procedure is in force, and the answer gave $4,400 for both years. |
+| R41 | **Comparison answered for one date only.** "In July 2024 and now" ran as a historical query for July 2024. The current value was never retrieved, and the answer check accepted the half answer. |
+| R09 | **Condition read as a date.** "If your record started after April 2016" set the as-of date to April 2016. No page version was in force then, so R2 refused. |
+| R18, R19 | **History tables in current documents.** The 2015 and 2010 thresholds appear only in the previous-thresholds table of the current VAT supplement. In historical mode, R2 requires a source in force at the as-of date, so it refused. |
+| R06 | **Wrong draft, correctly blocked.** For January 2026 the draft gave £241.30, the rate from April 2026. R10 stopped it. This counts as a failure only because the gold answer is VERIFIED. |
+
+These start the next list:
+* bind table cells to their row and column at chunking time, because the extraction prompt did not achieve
+  this (`public_v1` showed the same thing);
+* treat an as-of date after the reference date as unknown, unless a document announces that period;
+* restrict the tax-year pattern to explicit tax-year wording;
+* run comparison questions once for each period;
+* let a historical value come from a current document that states it as history.
+
+None were fixed, and `public_v2` is now spent.
+
+Tables: `results/public_v2_tables.md`. Records: `results/public_v2_records.jsonl`.
 
 All tables were rendered by `python -m evaluation.report` and `python -m evaluation.variance` from
 `results/*.json`. Nothing was edited by hand. Hardware: Windows 11, RTX 4070 8 GB, local Ollama
