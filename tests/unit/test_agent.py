@@ -10,6 +10,7 @@ from rag_sentinel.agent.verification import (
     INSUFFICIENT,
     NEEDS_REVIEW,
     VERIFIED,
+    repair_citations,
     states_conflict_value,
     unsupported_numbers,
     verify,
@@ -28,6 +29,16 @@ REF = date(2026, 10, 1)
         ("What will the per diem be in 2027?", "historical", date(2027, 12, 31)),
         ("What is the leave entitlement in 2026?", "current", REF),
         ("What was the previous annual leave entitlement?", "previous", REF),
+        ("What was the threshold in the 2024 to 2025 tax year?", "historical", date(2025, 4, 5)),
+        ("What was the rate in 2025-26?", "historical", date(2026, 4, 5)),
+        (
+            "How did the rate change between the 2024 to 2025 and the 2025 to 2026 tax years?",
+            "historical",
+            date(2026, 4, 5),
+        ),
+        ("How did the rate change between March 2024 and June 2025?", "historical", date(2025, 6, 30)),
+        ("What is the rate for the 2026 to 2027 tax year?", "current", REF),
+        ("What is the minimum wage for workers aged 18 to 20?", "current", REF),
     ],
 )
 def test_query_analysis(q, mode, as_of):
@@ -226,3 +237,30 @@ def test_answer_check_failure_is_not_trusted(agent_kb, scripted_llm):
 def test_answer_check_is_not_part_of_b3(agent_kb, scripted_llm):
     SentinelAgent(agent_kb, "B3").ask("How many days of annual leave do full-time employees get?")
     assert not any(name == "AnswerCheck" for name, _ in scripted_llm.calls)
+
+
+def test_repair_citations_needs_every_number_in_the_answer():
+    evidence = [ev("E1", "a", "Employees get 25 days."), ev("E2", "b", "Carry-over is limited to 5 days.")]
+    assert repair_citations("Employees get 25 days and may carry over 5.", "", evidence) == ["E1", "E2"]
+    assert repair_citations("Employees get 25 days.", "", evidence) == ["E1"]
+    assert repair_citations("Employees get 30 days.", "", evidence) == []
+    assert repair_citations("Employees get annual leave.", "", evidence) == []
+
+
+def test_verified_answer_with_repaired_citations_carries_a_warning():
+    gen = {"answer": "Employees get 25 days.", "citations": ["E1"], "citations_repaired": True,
+           "cannot_answer": False, "reason": ""}  # fmt: skip
+    v = run(gen, [ev("E1", "a", "Employees get 25 days.")])
+    assert v.status == VERIFIED and any("cited no evidence" in w for w in v.warnings)
+
+
+def test_graph_repairs_a_draft_without_citation_markers(agent_kb, scripted_llm):
+    scripted_llm.handlers["GeneratedAnswer"] = lambda s, u: {
+        "answer": "Full-time employees get 25 days of annual leave.",
+        "citations": [],
+        "cannot_answer": False,
+        "reason": "",
+    }
+    res = SentinelAgent(agent_kb, "B4").ask("How many days of annual leave do full-time employees get?")
+    assert "R4" not in res["rules_fired"]
+    assert res["citations"] and any("cited no evidence" in w for w in res["warnings"])

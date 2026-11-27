@@ -5,6 +5,7 @@ The generator's own confidence is never used. Rules, in order:
   R2 no retrieved evidence is in force at the as-of date                     -> INSUFFICIENT_EVIDENCE
   R3 the generator declined to answer                                       -> INSUFFICIENT_EVIDENCE
   R4 the answer has no valid citation                                        -> INSUFFICIENT_EVIDENCE
+     (a draft without any citation is first repaired from the passages containing all its numbers)
   R5 the answer states numbers that none of its cited passages contain       -> NEEDS_REVIEW
   R6 every cited source is superseded / draft / not yet effective            -> NEEDS_REVIEW
   R7 an unresolved contradiction exists for a fact the answer relies on      -> NEEDS_REVIEW
@@ -71,6 +72,22 @@ def unsupported_numbers(
     supported = set().union(*(numbers_in(t) for t in [*cited_texts, *cited_meta])) if cited_texts else set()
     supported |= {f"{float(m.group()):g}" for m in _YEAR.finditer(question)}
     return sorted(n for n in numbers_in(text) if n not in supported)
+
+
+def repair_citations(answer: str, question: str, evidence: list[dict]) -> list[str]:
+    """Labels for a draft that cites nothing: the highest-ranked passages that together contain every number
+    the answer states. Returns [] (no repair) when the answer states no number or some number is in no passage.
+    The repaired citations still go through every rule (R5 to R10)."""
+    needed = numbers_in(_LABEL.sub(" ", answer)) - {f"{float(m.group()):g}" for m in _YEAR.finditer(question)}
+    chosen: list[str] = []
+    for e in evidence:
+        if not needed:
+            break
+        hit = numbers_in(e["text"]) & needed
+        if hit:
+            chosen.append(e["label"])
+            needed -= hit
+    return chosen if chosen and not needed else []
 
 
 def relevant_keys(question: str, answer: str, cited_chunks: set[str], claims: list[dict]) -> set[str]:
@@ -142,6 +159,11 @@ def verify(
         v.warnings.append(f"Ignored citations to non-existent evidence: {', '.join(v.invalid_citations)}")
     if not v.valid_citations:
         return _fail(v, INSUFFICIENT, "R4", "The answer has no valid citation to the provided evidence.")
+    if generation.get("citations_repaired"):
+        v.warnings.append(
+            f"The draft cited no evidence; citations {', '.join(v.valid_citations)} were added because together they "
+            "contain every value the answer states."
+        )
 
     if answer_check and not answer_check.get("answers_question", True):
         missing = answer_check.get("missing") or "the specific information asked for"

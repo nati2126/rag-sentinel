@@ -22,7 +22,14 @@ from rag_sentinel.agent.answer_check import make_answer_checker
 from rag_sentinel.agent.generation import SYSTEM as GEN_SYSTEM
 from rag_sentinel.agent.generation import GeneratedAnswer, build_prompt
 from rag_sentinel.agent.query_analysis import analyze_query
-from rag_sentinel.agent.verification import ANSWERED, INSUFFICIENT, VERIFIED, citations_in, verify
+from rag_sentinel.agent.verification import (
+    ANSWERED,
+    INSUFFICIENT,
+    VERIFIED,
+    citations_in,
+    repair_citations,
+    verify,
+)
 from rag_sentinel.conflicts.detect import ConflictDetector, make_pair_judge
 from rag_sentinel.db import Claim, Document
 from rag_sentinel.ingest.versioning import valid_from
@@ -242,8 +249,18 @@ class SentinelAgent:
         except LLMError as exc:
             log.error("generation failed", extra={"error": str(exc)})
             return {"generation": None, "trace": [_tr("generate_answer", t, f"LLM error: {exc}")]}
-        return {"generation": gen.model_dump(),
-                "trace": [_tr("generate_answer", t, "declined" if gen.cannot_answer else f"cited {gen.citations}")]}  # fmt: skip
+        out = gen.model_dump()
+        detail = "declined" if gen.cannot_answer else f"cited {gen.citations}"
+        labels = {e["label"] for e in state["evidence"]}
+        if (
+            self.p.gating
+            and not gen.cannot_answer
+            and not any(c in labels for c in citations_in(gen.answer, gen.citations))
+        ):
+            if repaired := repair_citations(gen.answer, state["question"], state["evidence"]):
+                out |= {"citations": repaired, "citations_repaired": True}
+                detail += f"; no valid citation, repaired to {repaired}"
+        return {"generation": out, "trace": [_tr("generate_answer", t, detail)]}
 
     def check_answer(self, state: SentinelState) -> dict:
         t = time.perf_counter()

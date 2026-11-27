@@ -101,6 +101,15 @@ def context_relation(a: Claim, b: Claim) -> str:
     return "same" if subject_same else "ambiguous"
 
 
+def scope_similarity(a: Claim, b: Claim) -> float:
+    """Jaccard overlap of subject and qualifier words (years and plan names included)."""
+    ta = context_tokens(a.subject) | context_tokens(a.qualifier)
+    tb = context_tokens(b.subject) | context_tokens(b.qualifier)
+    if not ta and not tb:
+        return 1.0
+    return len(ta & tb) / len(ta | tb)
+
+
 class PairVerdict(BaseModel):
     relation: str  # same_fact_conflict | equivalent | different_context | complementary | unrelated
     reason: str = Field(max_length=400)
@@ -208,12 +217,41 @@ class ConflictDetector:
         for key, group in sorted(self.by_key.items()):
             if keys is not None and key not in keys:
                 continue
-            for i in range(len(group)):
-                for j in range(i + 1, len(group)):
-                    f = self.classify(group[i], group[j])
-                    if f is not None:
-                        out.append(f)
+            for a, b in self.candidate_pairs(key, group):
+                f = self.classify(a, b)
+                if f is not None:
+                    out.append(f)
         return out
+
+    def candidate_pairs(self, key: str, group: list[Claim]) -> list[tuple[Claim, Claim]]:
+        """Cross-document claim pairs worth comparing.
+
+        When a document states several values for the attribute (a table, an enumerated list), comparing every
+        value with every value of another document is mostly noise: the 2026 self-only limit against the 2024
+        family limit. Each claim is then paired only with the claims of the other document whose subject and
+        qualifier match it best (ties kept). Documents with one value each are always compared.
+        """
+        by_doc: dict[str, list[Claim]] = defaultdict(list)
+        for c in group:
+            by_doc[c.doc_id].append(c)
+        doc_ids = sorted(by_doc)
+        pairs: list[tuple[Claim, Claim]] = []
+        for i, d1 in enumerate(doc_ids):
+            for d2 in doc_ids[i + 1 :]:
+                xs, ys = by_doc[d1], by_doc[d2]
+                if (d1, key) not in self._multi_valued and (d2, key) not in self._multi_valued:
+                    pairs.extend((x, y) for x in xs for y in ys)
+                    continue
+                keep: set[tuple[int, int]] = set()
+                for side, (src, dst) in enumerate(((xs, ys), (ys, xs))):
+                    for si, s in enumerate(src):
+                        scores = [scope_similarity(s, d) for d in dst]
+                        best = max(scores)
+                        for di, sc in enumerate(scores):
+                            if sc == best:
+                                keep.add((si, di) if side == 0 else (di, si))
+                pairs.extend((xs[x], ys[y]) for x, y in sorted(keep))
+        return pairs
 
     # -- pair classification ------------------------------------------------
     def classify(self, a: Claim, b: Claim) -> Finding | None:

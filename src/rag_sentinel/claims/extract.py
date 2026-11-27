@@ -19,7 +19,7 @@ from rag_sentinel.db import Claim
 from rag_sentinel.ingest.metadata import parse_date
 from rag_sentinel.llm import LLM
 
-PROMPT_VERSION = "claims-v3"
+PROMPT_VERSION = "claims-v4"
 
 SYSTEM = (
     "You extract checkable factual claims from policy and technical documents. "
@@ -42,9 +42,14 @@ For each claim:
   Never put the value in the predicate.
 - value: the value with its unit exactly as written, e.g. "25 days", "$60", "12 characters", "required", "TLS 1.2".
 - qualifier: conditions or scope that limit the claim (e.g. "after 5 years of service", "international travel"),
-  or "" if none.
+  or "" if none. Always include:
+  * the case of an enumerated list: "20.5 cents per mile ... (1) for medical care" -> qualifier "medical care";
+  * the row and column of a table cell: "| Plan 2 | £29,385 | £2,448 |" under "Yearly | Monthly"
+    -> one claim per cell, qualifier "Plan 2, yearly" and "Plan 2, monthly";
+  * the period the value applies to, if stated: "calendar year 2026", "2025 to 2026 tax year".
 - effective_date: YYYY-MM-DD only if the passage states when this specific value takes effect, otherwise "".
-- source_quote: the exact sentence from the passage that states the claim, copied character for character.
+- source_quote: the exact sentence (or table row) from the passage that states the claim, copied character
+  for character.
 - confidence: 0 to 1, how explicitly the passage states the claim.
 
 Skip the document title, the document's own version number, and section headings.

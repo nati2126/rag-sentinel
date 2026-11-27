@@ -255,3 +255,27 @@ def test_is_a_relations_make_subjects_comparable_but_siblings_stay_undecided():
     assert context_relation(c("company phones"), c("devices")) == "same"
     assert context_relation(c("laptops"), c("phones")) == "ambiguous"
     assert context_relation(c("laptops"), c("production databases")) == "different"
+
+
+def test_multi_valued_documents_compare_only_best_matching_scopes():
+    """Two tables (plan x year) are compared row by row, not every cell against every cell."""
+    docs = [doc("t24", "hsa", 1, date(2024, 1, 1), 5), doc("t25", "hsa", 2, date(2025, 1, 1), 5, sup="t24")]
+    claims = [
+        claim("a", "t24", "$4,150", subject="HSA", key="hsa_limit", qualifier="self-only coverage"),
+        claim("b", "t24", "$8,300", subject="HSA", key="hsa_limit", qualifier="family coverage"),
+        claim("c", "t25", "$4,300", subject="HSA", key="hsa_limit", qualifier="self-only coverage"),
+        claim("d", "t25", "$8,550", subject="HSA", key="hsa_limit", qualifier="family coverage"),
+    ]
+    det = detector(docs, claims)
+    pairs = {frozenset({x.id, y.id}) for x, y in det.candidate_pairs("hsa_limit", claims)}
+    assert pairs == {frozenset({"a", "c"}), frozenset({"b", "d"})}
+    judged = []
+    det.judge = lambda x, y: judged.append((x.id, y.id)) or "same_fact_conflict"
+    det.detect()
+    assert len(judged) == 2
+
+
+def test_single_valued_documents_are_always_compared():
+    docs = [doc("x", auth=4), doc("y", auth=4)]
+    claims = [claim("a", "x", "5 days", qualifier="international travel"), claim("b", "y", "3 days")]
+    assert len(detector(docs, claims).candidate_pairs("annual_leave", claims)) == 1

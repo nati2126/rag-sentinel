@@ -22,6 +22,13 @@ _PREVIOUS = re.compile(
     r"(?:change|update|revision|version|policy change|increase|decrease))\b",
     re.IGNORECASE,
 )
+# "the 2024 to 2025 tax year", "2024-25", "2024/25": a UK tax year, 6 April to 5 April
+_TAX_YEAR = re.compile(r"\b(?P<y1>(?:19|20)\d\d)\s*(?:to|-|–|/)\s*(?P<y2>(?:19|20)?\d\d)\b")
+# "between March 2024 and June 2025": a comparison of two periods
+_BETWEEN = re.compile(
+    rf"\bbetween\s+(?:the\s+)?(?P<a>{_MONTH}\s+\d{{4}}|\d{{4}})\s+and\s+(?:the\s+)?(?P<b>{_MONTH}\s+\d{{4}}|\d{{4}})\b",
+    re.IGNORECASE,
+)
 _FUTURE = re.compile(r"\b(will|going to|upcoming|next year|scheduled|planned)\b", re.IGNORECASE)
 
 
@@ -63,7 +70,30 @@ def _resolve(prep: str, raw: str) -> date | None:
     return end
 
 
+def _period_end(question: str) -> tuple[date, str] | None:
+    """End of the latest tax year or 'between' period the question names (comparisons need the later one)."""
+    ends: list[tuple[date, str]] = []
+    for m in _TAX_YEAR.finditer(question):
+        y1, y2 = int(m.group("y1")), int(m.group("y2"))
+        if y2 < 100:
+            y2 += y1 // 100 * 100
+        if y2 == y1 + 1:
+            ends.append((date(y2, 4, 5), m.group(0)))
+    if m := _BETWEEN.search(question):
+        if (end := _resolve("in", m.group("b"))) is not None:
+            ends.append((end, m.group(0)))
+    return max(ends) if ends else None
+
+
 def analyze_query(question: str, reference: date) -> QueryAnalysis:
+    if found := _period_end(question):
+        end, phrase = found
+        if end < reference:
+            return QueryAnalysis(question, "historical", end, reference, phrase,
+                                 "period named in the question ended before the reference date")  # fmt: skip
+        if not _FUTURE.search(question):
+            return QueryAnalysis(question, "current", reference, reference, phrase,
+                                 "period covers the reference date: treated as current")  # fmt: skip
     if m := _DATE_EXPR.search(question):
         as_of = _resolve(m.group("prep"), m.group("date"))
         if as_of is not None:
