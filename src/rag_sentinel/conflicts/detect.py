@@ -110,6 +110,14 @@ def scope_similarity(a: Claim, b: Claim) -> float:
     return len(ta & tb) / len(ta | tb)
 
 
+def value_distance(a: Claim, b: Claim) -> float:
+    """Relative distance of two numeric values in the same unit; 1.0 when they cannot be compared."""
+    if a.value_num is None or b.value_num is None or a.value_unit != b.value_unit:
+        return 1.0
+    top = max(abs(a.value_num), abs(b.value_num))
+    return 0.0 if top == 0 else min(1.0, abs(a.value_num - b.value_num) / top)
+
+
 class PairVerdict(BaseModel):
     relation: str  # same_fact_conflict | equivalent | different_context | complementary | unrelated
     reason: str = Field(max_length=400)
@@ -229,7 +237,9 @@ class ConflictDetector:
         When a document states several values for the attribute (a table, an enumerated list), comparing every
         value with every value of another document is mostly noise: the 2026 self-only limit against the 2024
         family limit. Each claim is then paired only with the claims of the other document whose subject and
-        qualifier match it best (ties kept). Documents with one value each are always compared.
+        qualifier match it best. When the extractor left the scope out (a table row quoted as "5 | £83.40"),
+        every claim matches equally well, so ties are broken by the closest value: the cell of the next year's
+        table that changed least. Exact ties are kept. Documents with one value each are always compared.
         """
         by_doc: dict[str, list[Claim]] = defaultdict(list)
         for c in group:
@@ -245,7 +255,7 @@ class ConflictDetector:
                 keep: set[tuple[int, int]] = set()
                 for side, (src, dst) in enumerate(((xs, ys), (ys, xs))):
                     for si, s in enumerate(src):
-                        scores = [scope_similarity(s, d) for d in dst]
+                        scores = [(scope_similarity(s, d), -value_distance(s, d)) for d in dst]
                         best = max(scores)
                         for di, sc in enumerate(scores):
                             if sc == best:

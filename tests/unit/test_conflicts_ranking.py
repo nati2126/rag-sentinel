@@ -275,6 +275,19 @@ def test_multi_valued_documents_compare_only_best_matching_scopes():
     assert len(judged) == 2
 
 
+def test_table_cells_without_scope_are_paired_with_the_closest_value():
+    """A table quoted row by row ("5 | £83.40") leaves no scope to match, so the closest value decides."""
+    docs = [doc("t24", "ssp", 1, date(2024, 4, 6), 5), doc("t25", "ssp", 2, date(2025, 4, 6), 5, sup="t24")]
+    claims = [
+        claim("a", "t24", "£116.75", subject="employee", key="ssp_rate"),
+        claim("b", "t24", "£23.35", subject="employee", key="ssp_rate"),
+        claim("c", "t25", "£118.75", subject="employee", key="ssp_rate"),
+        claim("d", "t25", "£23.75", subject="employee", key="ssp_rate"),
+    ]
+    pairs = {frozenset({x.id, y.id}) for x, y in detector(docs, claims).candidate_pairs("ssp_rate", claims)}
+    assert pairs == {frozenset({"a", "c"}), frozenset({"b", "d"})}
+
+
 def test_single_valued_documents_are_always_compared():
     docs = [doc("x", auth=4), doc("y", auth=4)]
     claims = [claim("a", "x", "5 days", qualifier="international travel"), claim("b", "y", "3 days")]
