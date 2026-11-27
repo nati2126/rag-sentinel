@@ -18,6 +18,9 @@
   * the period the value applies to.
 
   The prompt version changes, so existing knowledge bases re-extract on re-index.
+* **Long tables are split.** One claim per table cell can exceed the output token cap, which cut the JSON off
+  on every attempt and lost the whole chunk. A chunk whose extraction fails is now split in half at a line
+  break (at most twice) and each part extracted separately.
 * **Citation repair.** A draft without citation markers is no longer refused outright (R4). It is cited to the
   highest-ranked passages that together contain every number it states. The answer still goes through R5–R10
   and carries a warning. Drafts with no numbers are still refused.

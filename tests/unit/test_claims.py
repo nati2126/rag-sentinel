@@ -4,6 +4,7 @@ import pytest
 from rag_sentinel.claims.canonical import canonicalize
 from rag_sentinel.claims.extract import ClaimList, extract_claims, locate_quote, to_claims, value_grounded
 from rag_sentinel.claims.normalize import normalize_value, numbers_in, values_equivalent
+from rag_sentinel.llm import LLMOutputError
 from tests.fakes import ScriptedLLM
 
 
@@ -83,6 +84,29 @@ def test_extract_claims_uses_cache():
     extract_claims(llm, "c", "d", "T", "text", store.get, store.__setitem__)
     rep = extract_claims(llm, "c", "d", "T", "text", store.get, store.__setitem__)
     assert len(llm.calls) == 1 and rep.cached
+
+
+def test_extraction_cut_off_by_the_token_cap_is_split_in_half():
+    text = "| Band | Threshold |\n| Band X | £24,990 |\n| Band Y | £28,470 |\n| Band Z | £31,395 |"
+
+    def handler(system, user):
+        if sum(user.count(f"| Band {b}") for b in "XYZ") > 2:  # the whole table: the output would be cut off
+            raise LLMOutputError("ClaimList: model output failed validation twice")
+        rows = [ln for ln in user.splitlines() if ln[:8] in ("| Band X", "| Band Y", "| Band Z")]
+        return {"claims": [{"subject": "borrower", "predicate": "repayment threshold", "value": r.split("|")[2].strip(),
+                            "qualifier": r.split("|")[1].strip(), "source_quote": r, "confidence": 0.9} for r in rows]}  # fmt: skip
+
+    llm = ScriptedLLM({"ClaimList": handler})
+    store = {}
+    rep = extract_claims(llm, "c", "d", "T", text, store.get, store.__setitem__)
+    assert sorted(c.value for c in rep.accepted) == ["£24,990", "£28,470", "£31,395"]
+    assert len(llm.calls) == 3 and len(store) == 1  # whole table, then both halves; one cache entry
+
+
+def test_extraction_failure_without_a_place_to_split_is_raised():
+    llm = ScriptedLLM({"ClaimList": lambda s, u: (_ for _ in ()).throw(LLMOutputError("bad"))})
+    with pytest.raises(LLMOutputError):
+        extract_claims(llm, "c", "d", "T", "one passage without breaks")
 
 
 def _label_embed(table):

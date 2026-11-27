@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from rag_sentinel.claims.normalize import normalize_value, numbers_in
 from rag_sentinel.db import Claim
 from rag_sentinel.ingest.metadata import parse_date
-from rag_sentinel.llm import LLM
+from rag_sentinel.llm import LLM, LLMOutputError
 
 PROMPT_VERSION = "claims-v4"
 
@@ -167,6 +167,29 @@ def to_claims(raw: ClaimList, chunk_id: str, doc_id: str, chunk_text: str, extra
     return report
 
 
+def _split_half(text: str) -> tuple[str, str] | None:
+    """Split at the line break (else the sentence end) nearest the middle; None when there is neither."""
+    mid = len(text) // 2
+    for pattern in (r"\n", r"(?<=[.;:])\s"):
+        cuts = [m.start() for m in re.finditer(pattern, text) if 0 < m.start() < len(text) - 1]
+        if cuts:
+            cut = min(cuts, key=lambda i: abs(i - mid))
+            return text[:cut], text[cut + 1 :]
+    return None
+
+
+def _ask(llm: LLM, title: str, text: str, depth: int = 0) -> ClaimList:
+    # A dense table can need more output than the token cap allows, so the JSON is cut off on every attempt.
+    # Such a passage is split in half and each half extracted on its own (at most twice, so four parts).
+    try:
+        return llm.chat_json(SYSTEM, USER_TEMPLATE.format(title=title, text=text), ClaimList)
+    except LLMOutputError:
+        halves = _split_half(text) if depth < 2 else None
+        if halves is None:
+            raise
+        return ClaimList(claims=[c for part in halves for c in _ask(llm, title, part, depth + 1).claims])
+
+
 def extract_claims(
     llm: LLM, chunk_id: str, doc_id: str, title: str, text: str, cache_get=None, cache_set=None
 ) -> ExtractionReport:
@@ -176,7 +199,7 @@ def extract_claims(
     if cached:
         raw = ClaimList.model_validate(raw_json)
     else:
-        raw = llm.chat_json(SYSTEM, USER_TEMPLATE.format(title=title, text=text), ClaimList)
+        raw = _ask(llm, title, text)
         if cache_set:
             cache_set(key, raw.model_dump())
     report = to_claims(raw, chunk_id, doc_id, text, llm.name)
