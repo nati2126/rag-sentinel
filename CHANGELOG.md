@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### v0.3: real-document robustness
+* **New held-out split `public_v2`.** It has 55 questions over 17 real documents: the UK State Pension, VAT
+  registration and student loan pages, and the IRS HSA revenue procedures.
+  * It was committed with tag `public-v2-split` before any v0.3 code change. `public_v1` is now development data.
+  * Superseded GOV.UK versions are Internet Archive captures.
+  * The reference date is the download date, 2026-11-27.
+* **Scoped claim pairs.** When a document states several values for one attribute (a table, an enumerated
+  list), each claim is compared only with the best-matching claims of the other document, by subject and
+  qualifier words. Previously every value was compared with every value, which sent thousands of pairs to the
+  LLM judge on public_v1.
+* **Extraction keeps scope.** The extraction prompt asks for:
+  * the case of an enumerated list ("(1) for medical care");
+  * the row and column of a table cell;
+  * the period the value applies to.
+
+  The prompt version changes, so existing knowledge bases re-extract on re-index.
+* **Citation repair.** A draft without citation markers is no longer refused outright (R4). It is cited to the
+  highest-ranked passages that together contain every number it states. The answer still goes through R5–R10
+  and carries a warning. Drafts with no numbers are still refused.
+* **Tax years and period comparisons.** "the 2024 to 2025 tax year", "2024-25" and "between March 2024 and
+  June 2025" are recognised. A question about a period that ended before the reference date runs in
+  historical mode, as of the end of the latest period named.
+
 ### MCP server
 * `python -m rag_sentinel.mcp` exposes six read-only tools over stdio or Streamable HTTP:
   * `ask_verified`
