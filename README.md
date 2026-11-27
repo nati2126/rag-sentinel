@@ -80,6 +80,20 @@ The reranker (about 1.1 GB) downloads on the first run if `SENTINEL_HF_OFFLINE=f
 Then upload the sample HR documents from `benchmark/corpus/dev/hr_leave/` on the Knowledge Base page and ask
 *"How many days of annual leave do full-time employees get?"*
 
+## Use it as MCP tools
+
+RAG Sentinel also runs as an [MCP](https://modelcontextprotocol.io) server, so assistants and agents can call
+its verification directly. It exposes six read-only tools:
+* `ask_verified`, `check_statement`, `search_documents`;
+* `list_documents`, `get_document_versions`, `list_conflicts`.
+
+```powershell
+.venv\Scripts\python.exe -m rag_sentinel.mcp --data-dir data/kb                     # stdio
+.venv\Scripts\python.exe -m rag_sentinel.mcp --data-dir data/kb --transport http     # http://127.0.0.1:8765/mcp
+```
+
+Client configuration and tool details are in the [developer guide](docs/development.md#mcp-server).
+
 ## Learn more
 
 * [Architecture](docs/architecture.md): pipeline, verification rules, data model

@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### MCP server
+* `python -m rag_sentinel.mcp` exposes six read-only tools over stdio or Streamable HTTP:
+  * `ask_verified`
+  * `check_statement`
+  * `search_documents`
+  * `list_documents`
+  * `get_document_versions`
+  * `list_conflicts`
+* The tools reuse the B4 pipeline's retrieval, ranking and verification. They add no new answer logic.
+* `check_statement` reports, for each number, which sources state it, their standing, and two kinds of flag:
+  * the source is the outdated side of a detected conflict;
+  * the source still states a value that a newer in-force version changed.
+
+  The second flag catches the demo handbook's 20 days, which the conflict judge had rated `different_context`.
+* Expected failures (unknown document, bad date, model server down) reach the client as readable tool errors.
+* Unit tests over the in-process MCP client, plus a manual end-to-end check over stdio and HTTP with the
+  real models on the demo knowledge base.
+
 ## v0.2: reliability hardening
 
 The goal was to make the v0.1 claims defensible, not to add features.

@@ -18,8 +18,8 @@ Setup is in the [README](../README.md#quick-start).
   "the previous version").
 * LangGraph agent with a per-node decision trace and ten verification rules (see
   [architecture.md](architecture.md)).
-* A FastAPI service, a Streamlit dashboard (Overview, Knowledge Base, Ask, Conflict Center, Evaluation)
-  and a CLI.
+* A FastAPI service, a Streamlit dashboard (Overview, Knowledge Base, Ask, Conflict Center, Evaluation),
+  a CLI, and an MCP server with read-only verification tools.
 * The **VersionConflict** benchmark ([benchmark/README.md](../benchmark/README.md)) with B0 to B4 baselines,
   ablations, bootstrap confidence intervals and McNemar tests.
 
@@ -55,6 +55,44 @@ Windows setup in the README is the verified path.
 | POST | `/conflicts/{id}/resolve`, `/analysis/refresh` | review workflow |
 | GET | `/stats`, `/events`, `/evaluation` | dashboard data |
 
+## MCP server
+
+`python -m rag_sentinel.mcp` serves the knowledge base as [Model Context Protocol](https://modelcontextprotocol.io)
+tools, over stdio (default) or Streamable HTTP (`--transport http --port 8765`, endpoint `/mcp`). All tools are
+read-only. Uploads, deletions and conflict resolution stay in the API and UI.
+
+| Tool | Returns |
+|---|---|
+| `ask_verified(question, as_of?)` | B4 answer, status (VERIFIED / NEEDS_REVIEW / INSUFFICIENT_EVIDENCE), cited sources with standing, reasons |
+| `check_statement(statement, as_of?)` | per number in the statement: which sources state it, their standing, conflict or newer-version flags, and a finding (`current`, `outdated`, `disputed`, `not_found`); plus the verified answer |
+| `search_documents(query, as_of?, top_k?)` | ranked passages with document, version and standing; no generation |
+| `list_documents(as_of?, family?)` | documents with version, dates, authority, approval and standing |
+| `get_document_versions(document, as_of?)` | all versions, values changed from the previous version, documents still stating the old values |
+| `list_conflicts(kind?, status?, document?, limit?)` | contradictions and outdated statements: values, documents, preferred document, explanation |
+
+Notes:
+* Documents can be named by filename, id, or a unique part of the filename.
+* The first call takes longer (about a minute on the reference machine), because it loads the embedder and
+  reranker. Later calls take 2–12 s with the LLM, or milliseconds for the listing tools.
+* Passages are trimmed to 600 characters so a small model's context is not flooded.
+* `check_statement` counts a source as stating a number only if the sentence with the number also contains
+  at least half of the statement's words. That stops "10:00" or an unrelated "10 days" from matching.
+* As with the CLI, the API must not have the same data folder open at the same time.
+
+Client configuration (the usual `mcpServers` format; use absolute paths):
+
+```json
+{
+  "mcpServers": {
+    "rag-sentinel": {
+      "command": "D:/github/rag/.venv/Scripts/python.exe",
+      "args": ["-m", "rag_sentinel.mcp", "--data-dir", "D:/github/rag/data/kb"],
+      "cwd": "D:/github/rag"
+    }
+  }
+}
+```
+
 ## Evaluation
 
 ```powershell
@@ -83,7 +121,7 @@ appear on the Evaluation page. See [evaluation_report.md](evaluation_report.md) 
 ## Project layout
 
 ```
-src/rag_sentinel/   ingest/ retrieval/ claims/ conflicts/ agent/ api/ kb.py ranking.py pipelines.py
+src/rag_sentinel/   ingest/ retrieval/ claims/ conflicts/ agent/ api/ mcp/ kb.py ranking.py pipelines.py
 ui/                 Streamlit dashboard
 benchmark/          VersionConflict corpus, questions, gold conflicts
 evaluation/         runner, metrics, threshold tuning, report and variance tables

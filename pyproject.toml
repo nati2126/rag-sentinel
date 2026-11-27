@@ -30,6 +30,7 @@ dependencies = [
     # UI
     "streamlit>=1.38",
     "pandas>=2.2",
+    "mcp>=2.3,<3",
 ]
 
 [dependency-groups]

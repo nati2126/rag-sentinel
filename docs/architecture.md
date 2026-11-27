@@ -32,6 +32,8 @@ flowchart LR
     API[FastAPI] --> S
     API --> AG[LangGraph agent]
     UI[Streamlit] --> API
+    MCP[MCP server<br/>read-only tools] --> AG
+    MCP --> S
 ```
 
 ## Question answering (LangGraph)
