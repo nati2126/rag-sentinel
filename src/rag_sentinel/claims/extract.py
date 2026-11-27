@@ -67,7 +67,15 @@ class ExtractedClaim(BaseModel):
 
 
 class ClaimList(BaseModel):
+    """One model answer (the cap is part of the output grammar)."""
+
     claims: list[ExtractedClaim] = Field(default_factory=list, max_length=15)
+
+
+class PassageClaims(BaseModel):
+    """The claims of one passage, possibly merged from the answers for its parts."""
+
+    claims: list[ExtractedClaim] = Field(default_factory=list)
 
 
 @dataclass
@@ -124,7 +132,9 @@ def cache_key(model: str, title: str, text: str) -> str:
     return "claims:" + hashlib.sha256(f"{model}|{PROMPT_VERSION}|{title}|{text}".encode()).hexdigest()
 
 
-def to_claims(raw: ClaimList, chunk_id: str, doc_id: str, chunk_text: str, extractor: str) -> ExtractionReport:
+def to_claims(
+    raw: ClaimList | PassageClaims, chunk_id: str, doc_id: str, chunk_text: str, extractor: str
+) -> ExtractionReport:
     report = ExtractionReport()
     seen: set[str] = set()
     for c in raw.claims:
@@ -178,7 +188,7 @@ def _split_half(text: str) -> tuple[str, str] | None:
     return None
 
 
-def _ask(llm: LLM, title: str, text: str, depth: int = 0) -> ClaimList:
+def _ask(llm: LLM, title: str, text: str, depth: int = 0) -> ClaimList | PassageClaims:
     # A dense table can need more output than the token cap allows, so the JSON is cut off on every attempt.
     # Such a passage is split in half and each half extracted on its own (at most twice, so four parts).
     try:
@@ -187,7 +197,7 @@ def _ask(llm: LLM, title: str, text: str, depth: int = 0) -> ClaimList:
         halves = _split_half(text) if depth < 2 else None
         if halves is None:
             raise
-        return ClaimList(claims=[c for part in halves for c in _ask(llm, title, part, depth + 1).claims])
+        return PassageClaims(claims=[c for part in halves for c in _ask(llm, title, part, depth + 1).claims])
 
 
 def extract_claims(
@@ -197,7 +207,7 @@ def extract_claims(
     raw_json = cache_get(key) if cache_get else None
     cached = raw_json is not None
     if cached:
-        raw = ClaimList.model_validate(raw_json)
+        raw = PassageClaims.model_validate(raw_json)
     else:
         raw = _ask(llm, title, text)
         if cache_set:

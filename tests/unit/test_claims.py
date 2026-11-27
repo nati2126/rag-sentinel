@@ -103,6 +103,23 @@ def test_extraction_cut_off_by_the_token_cap_is_split_in_half():
     assert len(llm.calls) == 3 and len(store) == 1  # whole table, then both halves; one cache entry
 
 
+def test_merged_parts_may_hold_more_claims_than_one_answer():
+    text = "\n".join(f"| Week {i} | £{100 + i} |" for i in range(24))
+
+    def handler(system, user):
+        rows = [ln for ln in user.splitlines() if ln.startswith("| Week ")]
+        if len(rows) > 12:
+            raise LLMOutputError("ClaimList: model output failed validation twice")
+        return {"claims": [{"subject": "claimant", "predicate": "weekly rate", "value": r.split("|")[2].strip(),
+                            "qualifier": r.split("|")[1].strip(), "source_quote": r, "confidence": 0.9} for r in rows]}  # fmt: skip
+
+    store = {}
+    rep = extract_claims(ScriptedLLM({"ClaimList": handler}), "c", "d", "T", text, store.get, store.__setitem__)
+    assert len(rep.accepted) == 24
+    again = extract_claims(ScriptedLLM({}), "c", "d", "T", text, store.get, store.__setitem__)
+    assert again.cached and len(again.accepted) == 24
+
+
 def test_extraction_failure_without_a_place_to_split_is_raised():
     llm = ScriptedLLM({"ClaimList": lambda s, u: (_ for _ in ()).throw(LLMOutputError("bad"))})
     with pytest.raises(LLMOutputError):
