@@ -1,0 +1,14 @@
+[
+  {"a": "dwp_news_2025_04_06.md", "a_value": "£230.25", "b": "govuk_new_state_pension_2026.md", "b_value": "£241.30", "kind": "outdated", "topic": "full rate of the new State Pension"},
+  {"a": "dwp_news_2025_04_06.md", "a_value": "£176.45", "b": "dwp_news_2026_04_04.md", "b_value": "£184.90", "kind": "outdated", "topic": "full basic State Pension"},
+  {"a": "govuk_new_state_pension_2024.md", "a_value": "£221.20", "b": "govuk_new_state_pension_2025.md", "b_value": "£230.25", "kind": "historical", "topic": "full rate of the new State Pension"},
+  {"a": "govuk_new_state_pension_2025.md", "a_value": "£230.25", "b": "govuk_new_state_pension_2026.md", "b_value": "£241.30", "kind": "historical", "topic": "full rate of the new State Pension"},
+  {"a": "govuk_vat_registration_2022.md", "a_value": "£85,000", "b": "govuk_register_for_vat_2026.md", "b_value": "£90,000", "kind": "historical", "topic": "VAT registration threshold"},
+  {"a": "govuk_vat_registration_2022.md", "a_value": "£83,000", "b": "hmrc_vat_notice_700_1_supplement.md", "b_value": "£88,000", "kind": "historical", "topic": "VAT deregistration threshold"},
+  {"a": "govuk_repaying_student_loan_2024.md", "a_value": "£27,295", "b": "govuk_repaying_student_loan_2025.md", "b_value": "£28,470", "kind": "historical", "topic": "Plan 2 yearly repayment threshold"},
+  {"a": "govuk_repaying_student_loan_2025.md", "a_value": "£28,470", "b": "govuk_repaying_student_loan_2026.md", "b_value": "£29,385", "kind": "historical", "topic": "Plan 2 yearly repayment threshold"},
+  {"a": "govuk_repaying_student_loan_2025.md", "a_value": "4.3%", "b": "govuk_repaying_student_loan_2026.md", "b_value": "4.1%", "kind": "historical", "topic": "Plan 1 interest rate"},
+  {"a": "irs_rp_23_23.pdf", "a_value": "$4,150", "b": "irs_rp_24_25.pdf", "b_value": "$4,300", "kind": "historical", "topic": "HSA self-only contribution limit"},
+  {"a": "irs_rp_24_25.pdf", "a_value": "$4,300", "b": "irs_rp_25_19.pdf", "b_value": "$4,400", "kind": "historical", "topic": "HSA self-only contribution limit"},
+  {"a": "irs_rp_25_19.pdf", "a_value": "$4,400", "b": "irs_rp_26_24.pdf", "b_value": "$4,500", "kind": "pending_change", "topic": "HSA self-only contribution limit (2027 amount not yet in force)"}
+]

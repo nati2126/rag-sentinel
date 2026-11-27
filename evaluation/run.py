@@ -35,6 +35,8 @@ ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "benchmark"
 RESULTS = ROOT / "results"
 AS_OF = date(2026, 10, 1)
+# reference date per split; public_v2 uses its download date, because its pages were updated after AS_OF
+SPLIT_AS_OF = {"public_v2": date(2026, 11, 27)}
 
 
 def load_questions(split: str) -> list[dict]:
@@ -42,14 +44,14 @@ def load_questions(split: str) -> list[dict]:
         return [json.loads(line) for line in fh if line.strip()]
 
 
-SPLITS = ["dev", "test_v1", "test_v2", "public_v1"]
-HELD_OUT = {"test_v2", "public_v1"}  # never used for tuning
+SPLITS = ["dev", "test_v1", "test_v2", "public_v1", "public_v2"]
+HELD_OUT = {"test_v2", "public_v1", "public_v2"}  # never used for tuning
 
 
 def bench_settings(split: str, min_relevance: float | None, temperature: float | None = None,
                    seed: int | None = None) -> Settings:  # fmt: skip
     base = Settings()
-    update = {"data_dir": ROOT / "data" / f"bench_{split}", "as_of": AS_OF}
+    update = {"data_dir": ROOT / "data" / f"bench_{split}", "as_of": SPLIT_AS_OF.get(split, AS_OF)}
     if temperature is not None:
         update["llm_temperature"] = temperature
     if seed is not None:
@@ -97,9 +99,9 @@ def eval_conflicts(kb: KnowledgeBase, split: str) -> dict:
              for a, b in naive_value_conflicts(claims)]  # fmt: skip
     lineage = kb.lineage()
     s = kb.settings
-    rules = ConflictDetector(docs, claims, lineage, AS_OF, s.ranking, s.authority_margin, None).detect()
+    rules = ConflictDetector(docs, claims, lineage, s.as_of, s.ranking, s.authority_margin, None).detect()
     judge = make_pair_judge(kb.llm, docs, kb.db.cache_get, kb.db.cache_set)
-    full = ConflictDetector(docs, claims, lineage, AS_OF, s.ranking, s.authority_margin, judge).detect()
+    full = ConflictDetector(docs, claims, lineage, s.as_of, s.ranking, s.authority_margin, judge).detect()
     return {
         "gold_pairs": len(gold),
         "gold_actionable": sum(1 for g in gold if g["kind"] in ("contradiction", "outdated")),
@@ -261,7 +263,7 @@ def main() -> None:
         "split": args.split,
         "tag": args.tag,
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "as_of": AS_OF.isoformat(),
+        "as_of": settings.as_of.isoformat(),
         "questions": len(questions),
         "environment": {
             "llm": settings.llm_model,

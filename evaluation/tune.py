@@ -3,7 +3,7 @@
 Uses B4 records produced with min_relevance=0: raising the threshold only turns answers whose best evidence
 relevance is below it into abstentions, so every candidate can be scored without re-running the LLM.
 Candidates are midpoints between observed relevances. The threshold with the highest pooled reliability
-wins; ties go to the lowest threshold (fewest refusals). The held-out splits (test_v2, public_v1) are never read.
+wins; ties go to the lowest threshold (fewest refusals). The held-out splits (test_v2, public_v1, public_v2) are never read.
 
     python -m evaluation.run --split dev --min-relevance 0 --force
     python -m evaluation.run --split test_v1 --min-relevance 0 --force

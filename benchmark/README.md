@@ -13,6 +13,8 @@ benchmark/
   conflicts/<split>.json       gold document-conflict annotations
   sources/                     Markdown sources for the synthetic PDF/DOCX files (see build_binary_docs.py)
   build_public_questions.py    writes the public_v1 questions and conflict annotations
+  build_public_v2_questions.py writes the public_v2 questions and conflict annotations
+  html_to_markdown.py          converts a downloaded web page to Markdown (text unchanged)
 ```
 
 | Split | Role | Questions | Documents |
@@ -21,6 +23,7 @@ benchmark/
 | `test_v1` | development (the v0.1 test split, retired after its failures were analysed) | 88 | 44 synthetic and public-derived |
 | `test_v2` | held out, run once (v0.2) | 81 | 40 synthetic and public-derived |
 | `public_v1` | held out, run once (v0.2), **real public documents** | 44 | 14 real IRS and UK government documents |
+| `public_v2` | held out, run once (v0.3), **real public documents** | 55 | 17 real IRS, HealthCare.gov and UK government documents |
 
 Splits use **disjoint document groups** and are indexed into **separate knowledge bases**, so nothing
 tuned on one split can see another split's documents.
@@ -73,9 +76,61 @@ under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc
 
 These documents are a snapshot for benchmarking, not tax or payroll advice. Check the publishers' current pages.
 
+### public_v2 sources
+
+`public_v2` was written and committed (tag `public-v2-split`) before any v0.3 code change. It covers four
+topics that no public_v1 question asks about: the UK new State Pension, UK VAT registration, UK student loan
+repayment and US Health Savings Accounts. (public_v1's HMRC employer pages also list student loan thresholds,
+but none of its questions use them, and public_v1 question P24 only checks that HSAs are *not* covered there.)
+
+The documents were downloaded on 2026-11-27 and converted with `html_to_markdown.py`, with the same rules as
+public_v1. Superseded versions of GOV.UK pages are **Internet Archive (Wayback Machine) captures** of the same
+page, taken before the values changed. The split contains:
+* year-to-year changes kept as a version family (three versions of the State Pension, VAT and student loan
+  pages; four HSA revenue procedures);
+* dated press releases that are never superseded but state last year's rates;
+* a published but not yet effective document (Rev. Proc. 2026-24, the 2027 HSA amounts) and an in-force page
+  that already states the 2027 amounts next to the 2026 ones;
+* long previous-threshold tables (VAT Notice 700/1 supplement);
+* page noise as published, such as a table caption "In 2026" under HealthCare.gov's 2027 table.
+
+Metadata dates come from the documents: the page's GOV.UK "updated" timestamp for each version, the release
+date of a press release, the calendar year an IRS revenue procedure covers, and the HTTP last-modified date of
+the HealthCare.gov page. When a document in the corpus states when new rates applied (the State Pension
+press releases, the VAT policy paper), that date is the effective date of the page version carrying them.
+Authority levels follow the public_v1 rule (5 IRS revenue procedures and HMRC notices, 4 GOV.UK and
+HealthCare.gov guidance pages and the HMRC policy paper, 3 press releases).
+
+The reference date for `public_v2` is **2026-11-27**, its download date, because several current pages were
+last updated after 2026-10-01. Historical questions avoid the gaps where a page version's timestamp is later
+than the date its rates started.
+
+| File | Source |
+|---|---|
+| `uk_state_pension/govuk_new_state_pension_2024.md` | https://web.archive.org/web/20240601000000/https://www.gov.uk/new-state-pension/what-youll-get |
+| `uk_state_pension/govuk_new_state_pension_2025.md` | https://web.archive.org/web/20250513000000/https://www.gov.uk/new-state-pension/what-youll-get |
+| `uk_state_pension/govuk_new_state_pension_2026.md` | https://www.gov.uk/new-state-pension/what-youll-get |
+| `uk_state_pension/dwp_news_2025_04_06.md` | https://www.gov.uk/government/news/huge-income-boost-for-millions-of-pensioners-and-working-people |
+| `uk_state_pension/dwp_news_2026_04_04.md` | https://www.gov.uk/government/news/over-12-million-pensioners-to-receive-575-state-pension-boost |
+| `uk_vat_registration/govuk_vat_registration_2022.md` | https://web.archive.org/web/20220501000000/https://www.gov.uk/vat-registration/when-to-register |
+| `uk_vat_registration/govuk_register_for_vat_2026.md` | https://www.gov.uk/register-for-vat |
+| `uk_vat_registration/hmrc_vat_threshold_increase_2024.md` | https://www.gov.uk/government/publications/vat-increasing-the-registration-and-deregistration-thresholds/increasing-the-vat-registration-threshold |
+| `uk_vat_registration/hmrc_vat_notice_700_1_supplement.md` | https://www.gov.uk/government/publications/vat-notice-7001-should-i-be-registered-for-vat/vat-notice-7001-supplement--2 |
+| `uk_student_loans/govuk_repaying_student_loan_2024.md` | https://web.archive.org/web/20240531000000/https://www.gov.uk/repaying-your-student-loan/what-you-pay |
+| `uk_student_loans/govuk_repaying_student_loan_2025.md` | https://web.archive.org/web/20250621000000/https://www.gov.uk/repaying-your-student-loan/what-you-pay |
+| `uk_student_loans/govuk_repaying_student_loan_2026.md` | https://www.gov.uk/repaying-your-student-loan/what-you-pay |
+| `irs_hsa/irs_rp_23_23.pdf` | https://www.irs.gov/pub/irs-drop/rp-23-23.pdf |
+| `irs_hsa/irs_rp_24_25.pdf` | https://www.irs.gov/pub/irs-drop/rp-24-25.pdf |
+| `irs_hsa/irs_rp_25_19.pdf` | https://www.irs.gov/pub/irs-drop/rp-25-19.pdf |
+| `irs_hsa/irs_rp_26_24.pdf` | https://www.irs.gov/pub/irs-drop/rp-26-24.pdf |
+| `irs_hsa/healthcare_gov_hsa_eligible_plans.md` | https://www.healthcare.gov/high-deductible-health-plan/ |
+
+Licences as for public_v1: US federal works are in the public domain; GOV.UK content is under the Open
+Government Licence v3.0. Wayback captures are of the same Crown-copyright pages.
+
 ## Reference date
 
-All questions are evaluated **as of 2026-10-01** unless the question itself names a date.
+All questions are evaluated **as of 2026-10-01** (public_v2: **2026-11-27**) unless the question itself names a date.
 
 ## Annotation guideline (expected decision)
 
